@@ -1,0 +1,7 @@
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/lib/cmake/zip/zipConfig.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/lib/cmake/zip/zipConfigVersion.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/lib/cmake/zip/zipTargets.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/lib/cmake/zip/zipTargets-debug.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/lib/kubazip.lib
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/bin/kubazip.dll
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/kubazip_x64-windows/debug/include/kubazip/zip/zip.h

@@ -1,0 +1,7 @@
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/lib/minizip.lib
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/bin/minizip.dll
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/share/unofficial-minizip/unofficial-minizipConfig.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/share/unofficial-minizip/unofficial-minizipConfigVersion.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/share/unofficial-minizip/unofficial-minizipTargets.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/share/unofficial-minizip/unofficial-minizipTargets-debug.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/debug/lib/pkgconfig/minizip.pc

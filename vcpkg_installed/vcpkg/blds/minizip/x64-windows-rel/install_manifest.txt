@@ -1,0 +1,13 @@
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/lib/minizip.lib
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/bin/minizip.dll
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/share/unofficial-minizip/unofficial-minizipConfig.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/share/unofficial-minizip/unofficial-minizipConfigVersion.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/share/unofficial-minizip/unofficial-minizipTargets.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/share/unofficial-minizip/unofficial-minizipTargets-release.cmake
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/include/minizip/crypt.h
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/include/minizip/ioapi.h
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/include/minizip/unzip.h
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/include/minizip/zip.h
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/include/minizip/mztools.h
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/include/minizip/iowin32.h
+C:/CG44/project/vcpkg_installed/vcpkg/pkgs/minizip_x64-windows/lib/pkgconfig/minizip.pc

@@ -1,0 +1,9 @@
+# ninja log v7
+8	371	8039847100875503	CMakeFiles/poly2tri.dir/poly2tri/sweep/advancing_front.cc.obj	b235da7a6d8808af
+12	487	8039847100907917	CMakeFiles/poly2tri.dir/poly2tri/sweep/cdt.cc.obj	cf6d075584882090
+27	495	8039847101069150	CMakeFiles/poly2tri.dir/poly2tri/sweep/sweep.cc.obj	2fd894fccc2ed701
+36	584	8039847101151983	CMakeFiles/poly2tri.dir/poly2tri/sweep/sweep_context.cc.obj	24d9c2dca3f9668b
+4	658	8039847100824383	CMakeFiles/poly2tri.dir/poly2tri/common/shapes.cc.obj	78428bee3a682c2e
+658	1013	8039847110660059	poly2tri.dll	b27c7f79d7777075
+658	1013	8039847110660059	poly2tri.lib	b27c7f79d7777075
+1014	1363	8039847110934559	CMakeFiles/install.util	d55a043ce8e7cbb

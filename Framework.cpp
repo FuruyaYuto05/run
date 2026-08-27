@@ -17,7 +17,8 @@ Framework::~Framework() = default;
 void Framework::Run() { Initialize(); while (!IsEndRequest()) { Update(); if (!IsEndRequest()) { Draw(); } } Finalize(); }
 void Framework::Initialize() {
 	winApp_ = std::make_unique<WinApp>(); winApp_->Initialize(); input_ = std::make_unique<Input>(); input_->Initialize(winApp_.get());
-	assert(SUCCEEDED(MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET)));
+	HRESULT result = MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET);
+	assert(SUCCEEDED(result));
 	sound_ = Sound::GetInstance(); sound_->Initialize();
 	dxCommon_ = std::make_unique<DirectXCommon>(); dxCommon_->Initialize(winApp_.get());
 	srvManager_ = std::make_unique<SrvManager>(); srvManager_->Initialize(dxCommon_.get());

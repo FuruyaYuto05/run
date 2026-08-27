@@ -61,7 +61,7 @@ void Object3d::CreateDirectionalLightData() {
 
     // デフォルト値の設定（白、下向き、輝度1.0など）
     directionalLightData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    directionalLightData->direction = { 0.0f, -1.0f, 0.0f };
+    directionalLightData->direction = { 0.5f, -1.0f, 0.5f };
     directionalLightData->intensity = 1.0f;
 }
 

@@ -179,6 +179,9 @@
     <ClCompile Include="Object3dCommon.cpp" />
     <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="ParticleManager.cpp" />
+    <ClCompile Include="CourseManager.cpp" />
+    <ClCompile Include="CourseSegment.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteCommon.cpp" />
@@ -275,6 +278,9 @@
     <ClInclude Include="Object3dCommon.h" />
     <ClInclude Include="ParticleEmitter.h" />
     <ClInclude Include="ParticleManager.h" />
+    <ClInclude Include="CourseManager.h" />
+    <ClInclude Include="CourseSegment.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sprite.h" />

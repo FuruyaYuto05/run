@@ -20,7 +20,8 @@ public:
 private:
 	std::unique_ptr<Object3d> object3d_;
 	Input* input_ = nullptr;
-	float moveSpeed_ = 0.1f;
-	float moveMinX_ = -2.0f;
-	float moveMaxX_ = 2.0f;
+	float moveSpeed_ = 0.2f;
+	int laneIndex_ = 1; // 0: 左、1: 中央、2: 右（移動先のレーン）
+	bool previousLeftPressed_ = false;
+	bool previousRightPressed_ = false;
 };

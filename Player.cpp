@@ -8,11 +8,20 @@
 #include <imgui.h>
 #endif
 
+namespace {
+constexpr int kLaneCount = 3;
+constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
+}
+
 Player::Player() = default;
 Player::~Player() = default;
 
 void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	input_ = input;
+	laneIndex_ = 1;
+	// シーンに入る前から押されていたキーは、新しい入力として扱わない。
+	previousLeftPressed_ = input_->Pushkey(DIK_A);
+	previousRightPressed_ = input_->Pushkey(DIK_D);
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
 	object3d_->SetModel("human/sneakWalk.gltf");
@@ -28,16 +37,31 @@ void Player::Finalize() {
 void Player::Update() {
 	Math::Vector3 position = object3d_->GetTranslate();
 
-	if (input_->Pushkey(DIK_A)) {
-		position.x -= moveSpeed_;
+	const bool leftPressed = input_->Pushkey(DIK_A);
+	const bool rightPressed = input_->Pushkey(DIK_D);
+	const bool triggerLeft = leftPressed && !previousLeftPressed_;
+	const bool triggerRight = rightPressed && !previousRightPressed_;
+	previousLeftPressed_ = leftPressed;
+	previousRightPressed_ = rightPressed;
+
+	bool acceptInput = true;
+#ifdef USE_IMGUI
+	acceptInput = !ImGui::GetIO().WantCaptureKeyboard;
+#endif
+	// 同時押しは移動せず、押した瞬間だけ隣のレーンを選ぶ。
+	if (acceptInput && leftPressed != rightPressed) {
+		if (triggerLeft) {
+			--laneIndex_;
+		}
+		if (triggerRight) {
+			++laneIndex_;
+		}
 	}
-	if (input_->Pushkey(DIK_D)) {
-		position.x += moveSpeed_;
-	}
-	if (moveMinX_ > moveMaxX_) {
-		std::swap(moveMinX_, moveMaxX_);
-	}
-	position.x = std::clamp(position.x, moveMinX_, moveMaxX_);
+	laneIndex_ = std::clamp(laneIndex_, 0, kLaneCount - 1);
+
+	// 目標まで一定速度で移動する。残り距離が小さければ目標に止める。
+	const float targetX = kLanePositions[laneIndex_];
+	position.x += std::clamp(targetX - position.x, -moveSpeed_, moveSpeed_);
 
 	object3d_->SetTranslate(position);
 	object3d_->Update();
@@ -52,9 +76,14 @@ void Player::DrawImGui() {
 	ImGui::Begin("Player Settings");
 
 	Math::Vector3 position = object3d_->GetTranslate();
-	if (ImGui::DragFloat3("Position", &position.x, 0.1f)) {
+	ImGui::Text("Position X: %.2f", position.x);
+	bool positionChanged = ImGui::DragFloat("Position Y", &position.y, 0.1f);
+	positionChanged |= ImGui::DragFloat("Position Z", &position.z, 0.1f);
+	if (positionChanged) {
 		object3d_->SetTranslate(position);
 	}
+	ImGui::Combo("Target Lane", &laneIndex_, "Left\0Center\0Right\0");
+	ImGui::Text("Target X: %.2f", kLanePositions[laneIndex_]);
 
 	Math::Vector3 rotation = object3d_->GetRotate();
 	if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {
@@ -66,16 +95,8 @@ void Player::DrawImGui() {
 		object3d_->SetScale(scale);
 	}
 
-	ImGui::DragFloat("Move Speed", &moveSpeed_, 0.01f, 0.0f, 1.0f);
-	if (ImGui::DragFloat("Move Min X", &moveMinX_, 0.1f)) {
-		if (moveMinX_ > moveMaxX_) {
-			moveMinX_ = moveMaxX_;
-		}
-	}
-	if (ImGui::DragFloat("Move Max X", &moveMaxX_, 0.1f)) {
-		if (moveMaxX_ < moveMinX_) {
-			moveMaxX_ = moveMinX_;
-		}
+	if (ImGui::DragFloat("Lane Move Speed", &moveSpeed_, 0.01f, 0.01f, 1.0f)) {
+		moveSpeed_ = std::clamp(moveSpeed_, 0.01f, 1.0f);
 	}
 
 	ImGui::End();

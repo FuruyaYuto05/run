@@ -181,6 +181,8 @@
     <ClCompile Include="ParticleManager.cpp" />
     <ClCompile Include="CourseManager.cpp" />
     <ClCompile Include="CourseSegment.cpp" />
+    <ClCompile Include="Obstacle.cpp" />
+    <ClCompile Include="ObstacleManager.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Sprite.cpp" />
@@ -280,6 +282,8 @@
     <ClInclude Include="ParticleManager.h" />
     <ClInclude Include="CourseManager.h" />
     <ClInclude Include="CourseSegment.h" />
+    <ClInclude Include="Obstacle.h" />
+    <ClInclude Include="ObstacleManager.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Skybox.h" />

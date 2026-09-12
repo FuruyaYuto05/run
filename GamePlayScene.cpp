@@ -8,6 +8,7 @@
 #include "TextureManager.h"
 #include "Player.h"
 #include "CourseManager.h"
+#include "ObstacleManager.h"
 #include <cmath>
 
 #ifdef USE_IMGUI
@@ -38,18 +39,22 @@ void GamePlayScene::Initialize() {
 	sprite_->Initialize(SpriteCommon::GetInstance(), "resources/uvChecker.png");
 	ModelManager::GetInstance()->LoadModel("human/sneakWalk.gltf");
 	ModelManager::GetInstance()->LoadModel("plane.obj");
+	ModelManager::GetInstance()->LoadModel("AnimatedCube.gltf");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/sneakWalk.gltf");
 	player_ = std::make_unique<Player>();
 	player_->Initialize(object3dCommon_, input_);
 	courseManager_ = std::make_unique<CourseManager>();
 	courseManager_->Initialize(object3dCommon_);
+	obstacleManager_ = std::make_unique<ObstacleManager>();
+	obstacleManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "sneakWalk.gltf");
 }
 
 void GamePlayScene::Finalize() {
 	player_->Finalize();
 	courseManager_->Finalize();
-	player_.reset(); courseManager_.reset(); sprite_.reset();
+	obstacleManager_->Finalize();
+	player_.reset(); courseManager_.reset(); obstacleManager_.reset(); sprite_.reset();
 	sprites_.clear();
 	camera_.reset();
 	Sound::GetInstance()->Unload(&soundData_);
@@ -69,11 +74,15 @@ void GamePlayScene::Update() {
 #endif
 	if (animatedModel_ && animation_.duration > 0) { animationTime_ = std::fmod(animationTime_ + 1.0f / 60.0f, animation_.duration); animatedModel_->UpdateSkeleton(animation_, animationTime_); }
 	camera_->Update();
-	player_->Update(); courseManager_->Update(camera_->GetTranslate().z); sprite_->Update();
+	player_->Update();
+	courseManager_->Update(camera_->GetTranslate().z);
+	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
+	sprite_->Update();
 	for (const auto& sprite : sprites_) { sprite->Update(); }
 }
 
 void GamePlayScene::Draw() {
 	courseManager_->Draw();
+	obstacleManager_->Draw();
 	player_->Draw();
 }

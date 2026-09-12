@@ -12,6 +12,7 @@ class Model;
 class Sprite;
 class Player;
 class CourseManager;
+class ObstacleManager;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -28,6 +29,7 @@ private:
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<Player> player_;
 	std::unique_ptr<CourseManager> courseManager_;
+	std::unique_ptr<ObstacleManager> obstacleManager_;
 	Model* animatedModel_ = nullptr;
 	std::unique_ptr<Sprite> sprite_;
 	std::vector<std::unique_ptr<Sprite>> sprites_;

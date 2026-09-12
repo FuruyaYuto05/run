@@ -16,6 +16,7 @@ public:
 	void Update(float cameraZ);
 	void Draw();
 	void DrawImGui();
+	float GetMoveSpeed() const { return moveSpeed_; }
 
 private:
 	std::vector<std::unique_ptr<CourseSegment>> courseSegments_;

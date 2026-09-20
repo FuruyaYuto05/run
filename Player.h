@@ -19,6 +19,8 @@ public:
 	void DrawImGui();
 	void OnCollision();
 	bool IsInvincible() const { return invincibleTimer_ > 0; }
+	int GetHp() const { return hp_; }
+	bool IsDead() const { return hp_ <= 0; }
 	const Math::Vector3& GetPosition() const;
 
 private:
@@ -30,4 +32,5 @@ private:
 	bool previousRightPressed_ = false;
 	int invincibleTimer_ = 0;
 	bool isVisible_ = true;
+	int hp_ = 3;
 };

@@ -13,6 +13,7 @@ constexpr int kLaneCount = 3;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
 constexpr int kInvincibleFrames = 120;
 constexpr int kBlinkIntervalFrames = 6;
+constexpr int kInitialHp = 3;
 }
 
 Player::Player() = default;
@@ -26,6 +27,7 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	previousRightPressed_ = input_->Pushkey(DIK_D);
 	invincibleTimer_ = 0;
 	isVisible_ = true;
+	hp_ = kInitialHp;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
 	object3d_->SetModel("human/sneakWalk.gltf");
@@ -86,6 +88,9 @@ void Player::Draw() {
 
 void Player::OnCollision() {
 	if (!IsInvincible()) {
+		if (hp_ > 0) {
+			--hp_;
+		}
 		invincibleTimer_ = kInvincibleFrames;
 		isVisible_ = false;
 	}
@@ -110,6 +115,7 @@ void Player::DrawImGui() {
 	ImGui::Text("Target X: %.2f", kLanePositions[laneIndex_]);
 	ImGui::Text("Invincible: %s", IsInvincible() ? "true" : "false");
 	ImGui::Text("Invincible Timer: %d", invincibleTimer_);
+	ImGui::Text("HP: %d", hp_);
 
 	Math::Vector3 rotation = object3d_->GetRotate();
 	if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {

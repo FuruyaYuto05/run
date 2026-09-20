@@ -31,8 +31,7 @@ private:
 	std::unique_ptr<CourseManager> courseManager_;
 	std::unique_ptr<ObstacleManager> obstacleManager_;
 	Model* animatedModel_ = nullptr;
-	std::unique_ptr<Sprite> sprite_;
-	std::vector<std::unique_ptr<Sprite>> sprites_;
+	std::vector<std::unique_ptr<Sprite>> hpSprites_;
 	Animation animation_{};
 	float animationTime_ = 0.0f;
 };

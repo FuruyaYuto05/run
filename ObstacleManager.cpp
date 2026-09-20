@@ -1,6 +1,7 @@
 #include "ObstacleManager.h"
 #include "Obstacle.h"
 #include <algorithm>
+#include <cmath>
 
 namespace {
 constexpr int kObstacleCount = 5;
@@ -10,6 +11,8 @@ constexpr float kObstacleY = 0.6f;
 constexpr float kRecycleOffset = 2.0f;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
 constexpr int kLaneCount = 3;
+constexpr float kCollisionHalfWidth = 0.8f;
+constexpr float kCollisionHalfDepth = 0.8f;
 }
 
 ObstacleManager::ObstacleManager() = default;
@@ -71,4 +74,16 @@ void ObstacleManager::Draw() {
 	for (const auto& obstacle : obstacles_) {
 		obstacle->Draw();
 	}
+}
+
+bool ObstacleManager::CheckCollision(const Math::Vector3& playerPosition) const {
+	for (const auto& obstacle : obstacles_) {
+		const Math::Vector3& obstaclePosition = obstacle->GetPosition();
+		const bool overlapsX = std::abs(playerPosition.x - obstaclePosition.x) <= kCollisionHalfWidth;
+		const bool overlapsZ = std::abs(playerPosition.z - obstaclePosition.z) <= kCollisionHalfDepth;
+		if (overlapsX && overlapsZ) {
+			return true;
+		}
+	}
+	return false;
 }

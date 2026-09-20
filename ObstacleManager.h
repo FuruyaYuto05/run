@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Math.h"
 #include <memory>
 #include <vector>
 
@@ -15,6 +16,7 @@ public:
 	void Finalize();
 	void Update(float cameraZ, float moveSpeed);
 	void Draw();
+	bool CheckCollision(const Math::Vector3& playerPosition) const;
 
 private:
 	std::vector<std::unique_ptr<Obstacle>> obstacles_;

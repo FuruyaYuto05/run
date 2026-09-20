@@ -77,6 +77,9 @@ void GamePlayScene::Update() {
 	player_->Update();
 	courseManager_->Update(camera_->GetTranslate().z);
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
+	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
+		player_->OnCollision();
+	}
 	sprite_->Update();
 	for (const auto& sprite : sprites_) { sprite->Update(); }
 }

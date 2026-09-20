@@ -11,6 +11,8 @@
 namespace {
 constexpr int kLaneCount = 3;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
+constexpr int kInvincibleFrames = 120;
+constexpr int kBlinkIntervalFrames = 6;
 }
 
 Player::Player() = default;
@@ -22,6 +24,8 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	// シーンに入る前から押されていたキーは、新しい入力として扱わない。
 	previousLeftPressed_ = input_->Pushkey(DIK_A);
 	previousRightPressed_ = input_->Pushkey(DIK_D);
+	invincibleTimer_ = 0;
+	isVisible_ = true;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
 	object3d_->SetModel("human/sneakWalk.gltf");
@@ -35,6 +39,13 @@ void Player::Finalize() {
 }
 
 void Player::Update() {
+	if (invincibleTimer_ > 0) {
+		--invincibleTimer_;
+		isVisible_ = ((invincibleTimer_ / kBlinkIntervalFrames) % 2) == 0;
+	} else {
+		isVisible_ = true;
+	}
+
 	Math::Vector3 position = object3d_->GetTranslate();
 
 	const bool leftPressed = input_->Pushkey(DIK_A);
@@ -68,7 +79,20 @@ void Player::Update() {
 }
 
 void Player::Draw() {
-	object3d_->Draw();
+	if (isVisible_) {
+		object3d_->Draw();
+	}
+}
+
+void Player::OnCollision() {
+	if (!IsInvincible()) {
+		invincibleTimer_ = kInvincibleFrames;
+		isVisible_ = false;
+	}
+}
+
+const Math::Vector3& Player::GetPosition() const {
+	return object3d_->GetTranslate();
 }
 
 void Player::DrawImGui() {
@@ -84,6 +108,8 @@ void Player::DrawImGui() {
 	}
 	ImGui::Combo("Target Lane", &laneIndex_, "Left\0Center\0Right\0");
 	ImGui::Text("Target X: %.2f", kLanePositions[laneIndex_]);
+	ImGui::Text("Invincible: %s", IsInvincible() ? "true" : "false");
+	ImGui::Text("Invincible Timer: %d", invincibleTimer_);
 
 	Math::Vector3 rotation = object3d_->GetRotate();
 	if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {

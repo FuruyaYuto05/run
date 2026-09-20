@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Math.h"
 #include <memory>
 
 class Object3d;
@@ -16,6 +17,9 @@ public:
 	void Update();
 	void Draw();
 	void DrawImGui();
+	void OnCollision();
+	bool IsInvincible() const { return invincibleTimer_ > 0; }
+	const Math::Vector3& GetPosition() const;
 
 private:
 	std::unique_ptr<Object3d> object3d_;
@@ -24,4 +28,6 @@ private:
 	int laneIndex_ = 1; // 0: 左、1: 中央、2: 右（移動先のレーン）
 	bool previousLeftPressed_ = false;
 	bool previousRightPressed_ = false;
+	int invincibleTimer_ = 0;
+	bool isVisible_ = true;
 };

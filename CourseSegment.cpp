@@ -8,6 +8,7 @@ CourseSegment::~CourseSegment() = default;
 void CourseSegment::Initialize(Object3dCommon* object3dCommon, const Math::Vector3& initialPosition) {
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
+	// 平面モデルを設定
 	object3d_->SetModel("plane.obj");
 
 	// plane.objを横幅5、奥行き12程度の仮足場として使用する

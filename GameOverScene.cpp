@@ -1,5 +1,6 @@
 #include "GameOverScene.h"
 #include "GamePlayScene.h"
+#include "TitleScene.h"
 #include "Input.h"
 #include "SceneManager.h"
 #include "Object3dCommon.h"
@@ -33,14 +34,14 @@ void GameOverScene::Update() {
 	backgroundSprite_->Update();
 	const bool enterPressed = input_->Pushkey(DIK_RETURN);
 	if (enterPressed && !previousEnterPressed_) {
-		sceneManager_->SetNextScene(std::make_unique<GamePlayScene>());
+		sceneManager_->SetNextScene(std::make_unique<TitleScene>());
 	}
 	previousEnterPressed_ = enterPressed;
 
 #ifdef USE_IMGUI
 	ImGui::Begin("Game Over");
 	ImGui::Text("GAME OVER");
-	ImGui::Text("Press Enter to retry");
+	ImGui::Text("Press Enter to go to the title screen");
 	ImGui::End();
 #endif
 }

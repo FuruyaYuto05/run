@@ -38,6 +38,7 @@ void GamePlayScene::Initialize() {
 		sprite->SetColor({ 1.0f, 0.15f, 0.15f, 1.0f });
 		hpSprites_.push_back(std::move(sprite));
 	}
+	// モデルのロード
 	ModelManager::GetInstance()->LoadModel("human/sneakWalk.gltf");
 	ModelManager::GetInstance()->LoadModel("plane.obj");
 	ModelManager::GetInstance()->LoadModel("AnimatedCube.gltf");

@@ -37,18 +37,18 @@ void CourseManager::Update(float cameraZ) {
 	if (courseSegments_.empty()) {
 		return;
 	}
-
+	// コースセグメントを更新
 	for (const auto& courseSegment : courseSegments_) {
 		Math::Vector3 position = courseSegment->GetPosition();
 		position.z -= moveSpeed_;
 		courseSegment->SetPosition(position);
 	}
-
+	// 最も奥にあるコースセグメントのZ座標を取得
 	float furthestZ = courseSegments_.front()->GetPosition().z;
 	for (const auto& courseSegment : courseSegments_) {
 		furthestZ = std::max(furthestZ, courseSegment->GetPosition().z);
 	}
-
+	// カメラのZ座標よりも奥にあるコースセグメントを前方に移動させる
 	for (const auto& courseSegment : courseSegments_) {
 		Math::Vector3 position = courseSegment->GetPosition();
 		if (position.z + kCourseSegmentHalfLength < cameraZ) {
@@ -61,6 +61,7 @@ void CourseManager::Update(float cameraZ) {
 }
 
 void CourseManager::Draw() {
+	// コースセグメントを描画
 	for (const auto& courseSegment : courseSegments_) {
 		courseSegment->Draw();
 	}

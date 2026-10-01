@@ -10,7 +10,7 @@
 void Game::Initialize() {
 	Framework::Initialize();
 	sceneManager_ = SceneManager::GetInstance();
-	sceneManager_->SetInput(input_.get());
+	sceneManager_->SetInput(GetInput());
 	sceneManager_->SetNextScene(std::make_unique<TitleScene>());
 }
 void Game::Finalize() { sceneManager_->Finalize(); sceneManager_ = nullptr; Framework::Finalize(); }
@@ -18,6 +18,13 @@ void Game::Update() {
 	Framework::Update();
 	if (IsEndRequest()) return;
 	sceneManager_->Update();
-	imguiManager_->End();
+	GetImGuiManager()->End();
 }
-void Game::Draw() { dxCommon_->PreDraw(); object3dCommon_->SetCommonDrawSetting(); srvManager_->PreDraw(); sceneManager_->Draw(); imguiManager_->Draw(); dxCommon_->PostDraw(); }
+void Game::Draw() {
+	GetDirectXCommon()->PreDraw();
+	GetObject3dCommon()->SetCommonDrawSetting();
+	GetSrvManager()->PreDraw();
+	sceneManager_->Draw();
+	GetImGuiManager()->Draw();
+	GetDirectXCommon()->PostDraw();
+}

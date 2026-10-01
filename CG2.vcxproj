@@ -303,6 +303,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\title.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\title.png</TargetPath>
+    </None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />
     <None Include="Skybox.hlsli" />

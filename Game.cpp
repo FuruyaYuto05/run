@@ -7,20 +7,23 @@
 #include "DirectXCommon.h"
 #include <memory>
 
-void Game::Initialize() {
-	Framework::Initialize();
+void Game::OnInitialize() {
 	sceneManager_ = SceneManager::GetInstance();
 	sceneManager_->SetInput(GetInput());
 	sceneManager_->SetNextScene(std::make_unique<TitleScene>());
 }
-void Game::Finalize() { sceneManager_->Finalize(); sceneManager_ = nullptr; Framework::Finalize(); }
-void Game::Update() {
-	Framework::Update();
-	if (IsEndRequest()) return;
+
+void Game::OnFinalize() {
+	sceneManager_->Finalize();
+	sceneManager_ = nullptr;
+}
+
+void Game::OnUpdate() {
 	sceneManager_->Update();
 	GetImGuiManager()->End();
 }
-void Game::Draw() {
+
+void Game::OnDraw() {
 	GetDirectXCommon()->PreDraw();
 	GetObject3dCommon()->SetCommonDrawSetting();
 	GetSrvManager()->PreDraw();

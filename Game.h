@@ -1,9 +1,13 @@
 #pragma once
 #include "Framework.h"
 class SceneManager;
-class Game : public Framework {
-public:
-	void Initialize() override; void Finalize() override; void Update() override; void Draw() override;
+class Game final : public Framework {
+protected:
+	void OnInitialize() override;
+	void OnFinalize() override;
+	void OnUpdate() override;
+	void OnDraw() override;
+
 private:
 	SceneManager* sceneManager_ = nullptr;
 };

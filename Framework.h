@@ -17,14 +17,14 @@ public:
     virtual ~Framework();
 
     void Run();
-    virtual void Initialize();
-    virtual void Finalize();
-    virtual void Update();
-    virtual void Draw() = 0;
-
     bool IsEndRequest() const { return endRequest_; }
 
 protected:
+    virtual void OnInitialize() = 0;
+    virtual void OnFinalize() = 0;
+    virtual void OnUpdate() = 0;
+    virtual void OnDraw() = 0;
+
     Input* GetInput() const { return input_.get(); }
     DirectXCommon* GetDirectXCommon() const { return dxCommon_.get(); }
     SrvManager* GetSrvManager() const { return srvManager_.get(); }
@@ -32,6 +32,10 @@ protected:
     Object3dCommon* GetObject3dCommon() const { return object3dCommon_; }
 
 private:
+    void InitializeEngine();
+    void FinalizeEngine();
+    void UpdateEngine();
+
     std::unique_ptr<WinApp> winApp_;
     std::unique_ptr<Input> input_;
     std::unique_ptr<DirectXCommon> dxCommon_;

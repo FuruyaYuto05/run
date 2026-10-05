@@ -15,6 +15,7 @@ public:
 	DirectXCommon* GetDxCommon() const { return dxCommon_; }
 
 	void SetCommonDrawSetting();
+	void SetSkinningDrawSetting();
 
 	// ==============================
 	// デフォルトカメラを設定する
@@ -27,6 +28,7 @@ public:
 	Camera* GetDefaultCamera() const { return defaultCamera_; }
 
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineState_;
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineStateSkinning_;
 	Microsoft::WRL::ComPtr<ID3D12PipelineState> graphicsPipelineStateSkybox_;
 
 	ID3D12PipelineState* GetGraphicsPipelineStateSkybox() const {

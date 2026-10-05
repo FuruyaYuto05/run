@@ -1,4 +1,5 @@
 #include "TitleScene.h"
+#include "Camera.h"
 #include "GamePlayScene.h"
 #include "Input.h"
 #include "SceneManager.h"
@@ -7,6 +8,7 @@
 #include "Sprite.h"
 #include "SpriteCommon.h"
 #include "TextureManager.h"
+#include "TitleRunner.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -40,6 +42,16 @@ TitleScene::TitleScene() = default;
 TitleScene::~TitleScene() = default;
 
 void TitleScene::Initialize() {
+	Object3dCommon* object3dCommon = Object3dCommon::GetInstance();
+	camera_ = std::make_unique<Camera>();
+	camera_->SetRotate({ 0.15f, 0.0f, 0.0f });
+	camera_->SetTranslate({ 0.0f, 2.5f, -12.0f });
+	object3dCommon->SetDefaultCamera(camera_.get());
+	camera_->Update();
+
+	runner_ = std::make_unique<TitleRunner>();
+	runner_->Initialize(object3dCommon, camera_.get());
+
 	TextureManager::GetInstance()->LoadTexture("resources/title.png");
 
 	shadowSprite_ = std::make_unique<Sprite>();
@@ -56,6 +68,9 @@ void TitleScene::Initialize() {
 }
 
 void TitleScene::Finalize() {
+	runner_->Finalize();
+	runner_.reset();
+	camera_.reset();
 	titleSprite_.reset();
 	shadowSprite_.reset();
 }
@@ -106,6 +121,9 @@ void TitleScene::Update() {
 		phaseTime_ = 0.0f;
 	}
 
+	camera_->Update();
+	runner_->Update();
+
 	shadowSprite_->Update();
 	titleSprite_->Update();
 
@@ -133,6 +151,8 @@ void TitleScene::ApplyLogoTransform(float scale, float yOffset, float rotation, 
 }
 
 void TitleScene::Draw() {
+	runner_->Draw();
+
 	ID3D12GraphicsCommandList* commandList = Object3dCommon::GetInstance()->GetDxCommon()->GetCommandList();
 	SpriteCommon::GetInstance()->PreDraw(commandList);
 	shadowSprite_->Draw(commandList);

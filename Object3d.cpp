@@ -132,6 +132,14 @@ void Object3d::Update() {
 void Object3d::Draw() {
     ID3D12GraphicsCommandList* commandList = object3dCommon->GetDxCommon()->GetCommandList();
 
+    // 骨付きモデルだけスキニング用の頂点シェーダーを使う。
+    // これがないと骨の姿勢を更新しても、モデルはTポーズのまま描画される。
+    if (model_ && model_->IsSkinned()) {
+        object3dCommon->SetSkinningDrawSetting();
+    } else {
+        object3dCommon->SetCommonDrawSetting();
+    }
+
     //// 1. VertexBufferViewを設定
     //commandList->IASetVertexBuffers(0, 1, &vertexBufferView);
 

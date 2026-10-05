@@ -3,6 +3,8 @@
 #include <memory>
 
 class Sprite;
+class Camera;
+class TitleRunner;
 
 class TitleScene : public BaseScene {
 public:
@@ -23,6 +25,8 @@ private:
 
 	std::unique_ptr<Sprite> titleSprite_;
 	std::unique_ptr<Sprite> shadowSprite_;
+	std::unique_ptr<Camera> camera_;
+	std::unique_ptr<TitleRunner> runner_;
 	Phase phase_ = Phase::Intro;
 	float phaseTime_ = 0.0f;
 	float totalTime_ = 0.0f;

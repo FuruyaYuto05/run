@@ -162,6 +162,8 @@ public: // メンバ関数
 
     void UpdateSkeleton(const Animation& animation, float animationTime);
 
+    bool IsSkinned() const { return isSkinned_; }
+
     float GetShininess() const { return materialData_->shininess; }
     void SetShininess(float shininess) { materialData_->shininess = shininess; }
 

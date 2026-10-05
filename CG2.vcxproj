@@ -192,6 +192,7 @@
     <ClCompile Include="StringUtility.cpp" />
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="TitleScene.cpp" />
+    <ClCompile Include="TitleRunner.cpp" />
     <ClCompile Include="WinApp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -295,6 +296,7 @@
     <ClInclude Include="StringUtility.h" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="TitleScene.h" />
+    <ClInclude Include="TitleRunner.h" />
     <ClInclude Include="WinApp.h" />
   </ItemGroup>
   <ItemGroup>

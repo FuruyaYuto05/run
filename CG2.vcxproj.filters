@@ -46,9 +46,6 @@
     <Filter Include="Game\Player">
       <UniqueIdentifier>{5630003c-5c53-46d9-bffe-f3baa2b24297}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Obstacle">
-      <UniqueIdentifier>{297f9085-3848-46b4-8c1f-14250807bab5}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Game\Course">
       <UniqueIdentifier>{68937771-9b02-40c5-9657-14487a7993d7}</UniqueIdentifier>
     </Filter>
@@ -57,6 +54,12 @@
     </Filter>
     <Filter Include="リソース ファイル\Shaders">
       <UniqueIdentifier>{66052835-1c89-4935-8abe-5681368e4c25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Scenes\Obstacle">
+      <UniqueIdentifier>{297f9085-3848-46b4-8c1f-14250807bab5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Scenes\Title">
+      <UniqueIdentifier>{f8d18a0c-62e9-4ad7-bc1d-c7cb2f38c848}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -124,16 +127,19 @@
       <Filter>Engine\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Obstacle.cpp">
-      <Filter>Game\Obstacle</Filter>
+      <Filter>Game\Scenes\Obstacle</Filter>
     </ClCompile>
     <ClCompile Include="ObstacleManager.cpp">
-      <Filter>Game\Obstacle</Filter>
+      <Filter>Game\Scenes\Obstacle</Filter>
     </ClCompile>
     <ClCompile Include="Player.cpp">
       <Filter>Game\Player</Filter>
     </ClCompile>
     <ClCompile Include="TitleScene.cpp">
-      <Filter>Game\Scenes</Filter>
+      <Filter>Game\Scenes\Title</Filter>
+    </ClCompile>
+    <ClCompile Include="TitleRunner.cpp">
+      <Filter>Game\Scenes\Title</Filter>
     </ClCompile>
     <ClCompile Include="ParticleEmitter.cpp">
       <Filter>Engine\Graphics</Filter>
@@ -278,7 +284,10 @@
       <Filter>Engine\Debug</Filter>
     </ClInclude>
     <ClInclude Include="TitleScene.h">
-      <Filter>Game\Scenes</Filter>
+      <Filter>Game\Scenes\Title</Filter>
+    </ClInclude>
+    <ClInclude Include="TitleRunner.h">
+      <Filter>Game\Scenes\Title</Filter>
     </ClInclude>
     <ClInclude Include="GamePlayScene.h">
       <Filter>Game\Scenes</Filter>
@@ -290,10 +299,10 @@
       <Filter>Game\Player</Filter>
     </ClInclude>
     <ClInclude Include="Obstacle.h">
-      <Filter>Game\Obstacle</Filter>
+      <Filter>Game\Scenes\Obstacle</Filter>
     </ClInclude>
     <ClInclude Include="ObstacleManager.h">
-      <Filter>Game\Obstacle</Filter>
+      <Filter>Game\Scenes\Obstacle</Filter>
     </ClInclude>
     <ClInclude Include="CourseSegment.h">
       <Filter>Game\Course</Filter>
@@ -317,6 +326,9 @@
     </None>
     <None Include="resources\shaders\Particle.hlsli">
       <Filter>リソース ファイル\Shaders</Filter>
+    </None>
+    <None Include="resources\title.png">
+      <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

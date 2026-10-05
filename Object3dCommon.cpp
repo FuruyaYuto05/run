@@ -162,8 +162,10 @@ void Object3dCommon::CreateGraphicsPipeline()
     auto vertexShaderBlob = dxCommon_->CompileShader(L"resources/shaders/Object3d.VS.hlsl", L"vs_6_0");
     auto pixelShaderBlob = dxCommon_->CompileShader(L"resources/shaders/Object3d.PS.hlsl", L"ps_6_0");
 
-    // アニメーション用のシェーダーコンパイル
-    //auto vertexShaderBlob = dxCommon_->CompileShader(L"resources/shaders/SkinningObject3d.VS.hlsl", L"vs_6_0");
+    // アニメーションモデル用の頂点シェーダー。
+    // 通常モデルとは別のPSOにして、描画するモデルに応じて切り替える。
+    auto skinningVertexShaderBlob = dxCommon_->CompileShader(
+        L"resources/shaders/SkinningObject3d.VS.hlsl", L"vs_6_0");
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
     graphicsPipelineStateDesc.pRootSignature = rootSignature_.Get();
@@ -190,6 +192,17 @@ void Object3dCommon::CreateGraphicsPipeline()
     HRESULT hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(
         &graphicsPipelineStateDesc,
         IID_PPV_ARGS(graphicsPipelineState_.GetAddressOf())
+    );
+    assert(SUCCEEDED(hr));
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC skinningPipelineStateDesc = graphicsPipelineStateDesc;
+    skinningPipelineStateDesc.VS = {
+        skinningVertexShaderBlob->GetBufferPointer(),
+        skinningVertexShaderBlob->GetBufferSize()
+    };
+    hr = dxCommon_->GetDevice()->CreateGraphicsPipelineState(
+        &skinningPipelineStateDesc,
+        IID_PPV_ARGS(graphicsPipelineStateSkinning_.GetAddressOf())
     );
     assert(SUCCEEDED(hr));
 
@@ -248,6 +261,14 @@ void Object3dCommon::SetCommonDrawSetting()
     // グラフィックスパイプラインステートをセットするコマンド
     commandList->SetPipelineState(graphicsPipelineState_.Get());
     // プリミティブトポロジーをセットするコマンド
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+void Object3dCommon::SetSkinningDrawSetting()
+{
+    ID3D12GraphicsCommandList* commandList = dxCommon_->GetCommandList();
+    commandList->SetGraphicsRootSignature(rootSignature_.Get());
+    commandList->SetPipelineState(graphicsPipelineStateSkinning_.Get());
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 // ↑ここまで追加

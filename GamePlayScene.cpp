@@ -39,17 +39,17 @@ void GamePlayScene::Initialize() {
 		hpSprites_.push_back(std::move(sprite));
 	}
 	// モデルのロード
-	ModelManager::GetInstance()->LoadModel("human/sneakWalk.gltf");
+	ModelManager::GetInstance()->LoadModel("human/Mannequin_Large.glb");
 	ModelManager::GetInstance()->LoadModel("plane.obj");
 	ModelManager::GetInstance()->LoadModel("AnimatedCube.gltf");
-	animatedModel_ = ModelManager::GetInstance()->FindModel("human/sneakWalk.gltf");
+	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
 	player_ = std::make_unique<Player>();
 	player_->Initialize(object3dCommon_, input_);
 	courseManager_ = std::make_unique<CourseManager>();
 	courseManager_->Initialize(object3dCommon_);
 	obstacleManager_ = std::make_unique<ObstacleManager>();
 	obstacleManager_->Initialize(object3dCommon_);
-	animation_ = LoadAnimationFile("resources/human", "sneakWalk.gltf");
+	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
 }
 
 void GamePlayScene::Finalize() {

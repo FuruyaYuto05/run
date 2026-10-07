@@ -305,9 +305,21 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="resources\title.png">
+    <None Include="resources\title\title.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>resources\title.png</TargetPath>
+      <TargetPath>resources\title\title.png</TargetPath>
+    </None>
+    <None Include="resources\title\PLAY.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\title\PLAY.png</TargetPath>
+    </None>
+    <None Include="resources\title\EXIT.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\title\EXIT.png</TargetPath>
+    </None>
+    <None Include="resources\human\white.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\human\white.png</TargetPath>
     </None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />

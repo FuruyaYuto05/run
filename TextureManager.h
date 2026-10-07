@@ -3,6 +3,7 @@
 #include <wrl.h>
 #include <d3d12.h>
 #include "externals/DirectXTex/DirectXTex.h"
+#include <cstddef>
 #include <unordered_map>
 
 
@@ -35,6 +36,8 @@ private:
     };
 
     std::unordered_map<std::string, TextureData> textureDatas;
+
+    void CreateTextureData(const std::string& textureKey, const DirectX::ScratchImage& mipImages);
 public:
     static TextureManager* GetInstance();
     void SetDirectXCommon(DirectXCommon* dxCommon);
@@ -43,6 +46,7 @@ public:
     void Finalize();
 
     void LoadTexture(const std::string& filePath);
+    void LoadTextureFromMemory(const std::string& textureKey, const void* data, size_t dataSize);
 
     // ==============================
     // メタデータを取得

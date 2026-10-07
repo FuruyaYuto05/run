@@ -327,7 +327,13 @@
     <None Include="resources\shaders\Particle.hlsli">
       <Filter>リソース ファイル\Shaders</Filter>
     </None>
-    <None Include="resources\title.png">
+    <None Include="resources\title\title.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\title\PLAY.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\title\EXIT.png">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

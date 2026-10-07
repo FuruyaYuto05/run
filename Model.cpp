@@ -261,9 +261,21 @@ void Model::LoadGltfFile(const std::string& directoryPath, const std::string& fi
 
         if (material->GetTexture(aiTextureType_DIFFUSE, 0, &textureFilePath) == AI_SUCCESS ||
             material->GetTexture(aiTextureType_BASE_COLOR, 0, &textureFilePath) == AI_SUCCESS) {
-
-            modelData_.material.textureFilePath =
-                baseDirectory + "/" + textureFilePath.C_Str();
+            if (const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(textureFilePath.C_Str())) {
+                // GLBではPNGやJPEGがファイル内へ埋め込まれていることがある。
+                // mHeight == 0 は圧縮済み画像データで、mWidthにバイト数が入っている。
+                assert(embeddedTexture->mHeight == 0);
+                const std::string textureKey = filePath + "#embedded:" + textureFilePath.C_Str();
+                TextureManager::GetInstance()->LoadTextureFromMemory(
+                    textureKey,
+                    embeddedTexture->pcData,
+                    static_cast<size_t>(embeddedTexture->mWidth)
+                );
+                modelData_.material.textureFilePath = textureKey;
+            } else {
+                modelData_.material.textureFilePath =
+                    baseDirectory + "/" + textureFilePath.C_Str();
+            }
         }
     }
 

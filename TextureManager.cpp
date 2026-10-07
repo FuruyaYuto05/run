@@ -94,11 +94,55 @@ void TextureManager::LoadTexture(const std::string& filePath)
         assert(SUCCEEDED(hr));
     }
 
-    // ==============================
-    // unordered_mapに新しいTextureDataを作る
-    // filePathがキーになる
-    // ==============================
-    TextureData& textureData = textureDatas[filePath];
+    CreateTextureData(filePath, mipImages);
+}
+
+void TextureManager::LoadTextureFromMemory(
+    const std::string& textureKey,
+    const void* data,
+    size_t dataSize)
+{
+    if (textureDatas.find(textureKey) != textureDatas.end()) {
+        return;
+    }
+
+    assert(data);
+    assert(dataSize > 0);
+    assert(srvManager_);
+    assert(srvManager_->CanAllocate());
+
+    DirectX::ScratchImage image{};
+    HRESULT hr = DirectX::LoadFromWICMemory(
+        data,
+        dataSize,
+        DirectX::WIC_FLAGS_FORCE_SRGB,
+        nullptr,
+        image
+    );
+    assert(SUCCEEDED(hr));
+
+    DirectX::ScratchImage mipImages{};
+    hr = DirectX::GenerateMipMaps(
+        image.GetImages(),
+        image.GetImageCount(),
+        image.GetMetadata(),
+        DirectX::TEX_FILTER_SRGB,
+        0,
+        mipImages
+    );
+    assert(SUCCEEDED(hr));
+
+    CreateTextureData(textureKey, mipImages);
+}
+
+void TextureManager::CreateTextureData(
+    const std::string& textureKey,
+    const DirectX::ScratchImage& mipImages)
+{
+    DirectXCommon* dxCommon = dxCommon_;
+
+    // textureKeyは通常のファイルパスだけでなく、GLB内テクスチャの識別名にも使う。
+    TextureData& textureData = textureDatas[textureKey];
 
     textureData.metadata = mipImages.GetMetadata();
     textureData.resource = dxCommon->CreateTextureResource(textureData.metadata);

@@ -30,7 +30,9 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	hp_ = kInitialHp;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
-	object3d_->SetModel("human/sneakWalk.gltf");
+	object3d_->SetModel("human/Mannequin_Large.glb");
+	// Mannequin_Largeは以前のモデルより約2.4倍大きいため縮小する。
+	object3d_->SetScale({ 0.4f, 0.4f, 0.4f });
 	object3d_->SetTranslate({ 0, 0, 0 });
 	object3d_->SetRotate({ 0, 3.14f, 0 });
 }
@@ -40,7 +42,9 @@ void Player::Finalize() {
 	input_ = nullptr;
 }
 
+// プレイヤーの更新処理
 void Player::Update() {
+	// 無敵状態の処理
 	if (invincibleTimer_ > 0) {
 		--invincibleTimer_;
 		isVisible_ = ((invincibleTimer_ / kBlinkIntervalFrames) % 2) == 0;
@@ -48,12 +52,15 @@ void Player::Update() {
 		isVisible_ = true;
 	}
 
+	// 入力処理
 	Math::Vector3 position = object3d_->GetTranslate();
-
+	// 左右の入力を取得する。押している間はtrueになる。
 	const bool leftPressed = input_->Pushkey(DIK_A);
 	const bool rightPressed = input_->Pushkey(DIK_D);
+	// 押した瞬間だけ反応するようにするため、前回の状態と比較してトリガーを判定する。
 	const bool triggerLeft = leftPressed && !previousLeftPressed_;
 	const bool triggerRight = rightPressed && !previousRightPressed_;
+	// 前回の状態を更新する。
 	previousLeftPressed_ = leftPressed;
 	previousRightPressed_ = rightPressed;
 
@@ -70,6 +77,7 @@ void Player::Update() {
 			++laneIndex_;
 		}
 	}
+	// レーンの範囲を制限する。
 	laneIndex_ = std::clamp(laneIndex_, 0, kLaneCount - 1);
 
 	// 目標まで一定速度で移動する。残り距離が小さければ目標に止める。
@@ -96,6 +104,7 @@ void Player::OnCollision() {
 	}
 }
 
+// プレイヤーの位置を取得する
 const Math::Vector3& Player::GetPosition() const {
 	return object3d_->GetTranslate();
 }
@@ -123,8 +132,31 @@ void Player::DrawImGui() {
 	}
 
 	Math::Vector3 scale = object3d_->GetScale();
+	float uniformScale = scale.x;
+	if (ImGui::DragFloat("Uniform Scale", &uniformScale, 0.01f, 0.01f, 5.0f)) {
+		uniformScale = std::clamp(uniformScale, 0.01f, 5.0f);
+		scale = { uniformScale, uniformScale, uniformScale };
+		object3d_->SetScale(scale);
+	}
 	if (ImGui::DragFloat3("Scale", &scale.x, 0.01f)) {
 		object3d_->SetScale(scale);
+	}
+
+	ImGui::SeparatorText("Player Lighting");
+	Object3d::DirectionalLight& light = object3d_->GetDirectionalLight();
+	ImGui::ColorEdit4("Light Color", &light.color.x);
+	ImGui::DragFloat3("Light Direction", &light.direction.x, 0.01f, -1.0f, 1.0f);
+	if (ImGui::DragFloat("Light Intensity", &light.intensity, 0.01f, 0.0f, 5.0f)) {
+		light.intensity = std::clamp(light.intensity, 0.0f, 5.0f);
+	}
+	if (ImGui::DragFloat("Ambient Intensity", &light.ambientIntensity, 0.01f, 0.0f, 1.0f)) {
+		light.ambientIntensity = std::clamp(light.ambientIntensity, 0.0f, 1.0f);
+	}
+	if (ImGui::Button("Reset Player Lighting")) {
+		light.color = { 1.0f, 1.0f, 1.0f, 1.0f };
+		light.direction = { 0.5f, -1.0f, 0.5f };
+		light.intensity = 1.0f;
+		light.ambientIntensity = 0.25f;
 	}
 
 	if (ImGui::DragFloat("Lane Move Speed", &moveSpeed_, 0.01f, 0.01f, 1.0f)) {

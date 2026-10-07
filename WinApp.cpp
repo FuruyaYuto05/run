@@ -78,7 +78,7 @@ void WinApp::Initialize()
 	//ウィンドウの生成
 	hwnd = CreateWindow(
 		wc.lpszClassName,
-		L"runProject",
+		L"LE3C_20_フルヤ_ユウト_タタリバシリ",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,

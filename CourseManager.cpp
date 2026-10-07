@@ -5,11 +5,15 @@
 #ifdef USE_IMGUI
 #include <imgui.h>
 #endif
-
+// コースセグメントの数と長さを定義
 namespace {
+// コースセグメントの数
 constexpr int kCourseSegmentCount = 5;
+// コースセグメントの長さ
 constexpr float kCourseSegmentLength = 12.0f;
+// コースセグメントの半分の長さ
 constexpr float kCourseSegmentHalfLength = kCourseSegmentLength * 0.5f;
+// 最初のコースセグメントのZ座標
 constexpr float kFirstCourseSegmentZ = 5.0f;
 }
 
@@ -34,6 +38,7 @@ void CourseManager::Finalize() {
 }
 
 void CourseManager::Update(float cameraZ) {
+	// コースセグメントが存在しない場合は何もしない
 	if (courseSegments_.empty()) {
 		return;
 	}

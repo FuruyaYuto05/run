@@ -15,6 +15,8 @@ struct DirectionalLight
     float32_t4 color;
     float32_t3 direction;
     float intensity;
+    float ambientIntensity;
+    float32_t3 padding;
 };
 ConstantBuffer<DirectionalLight> gDirectionalLight : register(b1);
 struct Camera
@@ -36,7 +38,8 @@ PixelShaderOutput main(VertexShaderOutput input)
     float32_t4 textureColor = gTexture.Sample(gSampler, input.texcoord);
     if (gMaterial.enableLighting == 0)
     {
-        output.color = gMaterial.color * textureColor;
+        output.color.rgb = gMaterial.color.rgb * textureColor.rgb;
+        output.color.a = 1.0f;
         return output;
     }
 
@@ -49,10 +52,13 @@ PixelShaderOutput main(VertexShaderOutput input)
     float32_t3 halfVector = normalize(-lightDirection + toEye);
     float NdotH = dot(normal, halfVector);
     float specularPower = pow(saturate(NdotH), gMaterial.shininess);
-    float32_t3 diffuse = gMaterial.color.rgb * textureColor.rgb * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
+    float32_t3 baseColor = gMaterial.color.rgb * textureColor.rgb;
+    float32_t3 ambient = baseColor * gDirectionalLight.color.rgb * gDirectionalLight.ambientIntensity;
+    float32_t3 diffuse = baseColor * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
     float32_t3 specular = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPower;
-    output.color.rgb = diffuse + specular;
-    output.color.a = gMaterial.color.a * textureColor.a;
+    output.color.rgb = ambient + diffuse + specular;
+    // Object3Dは不透明用パイプラインなので、出力αも常に不透明にする。
+    output.color.a = 1.0f;
  
     return output;
 }

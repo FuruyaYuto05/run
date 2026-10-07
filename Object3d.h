@@ -58,6 +58,8 @@ public: // 構造体
         Math::Vector4 color;     // ライトの色
         Math::Vector3 direction; // ライトの向き
         float intensity;         // 輝度
+        float ambientIntensity;  // 光が直接当たらない面の最低限の明るさ
+        float padding[3];
     };
 
 public: // メンバ関数

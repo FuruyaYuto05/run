@@ -63,6 +63,10 @@ void Object3d::CreateDirectionalLightData() {
     directionalLightData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
     directionalLightData->direction = { 0.5f, -1.0f, 0.5f };
     directionalLightData->intensity = 1.0f;
+    directionalLightData->ambientIntensity = 0.25f;
+    directionalLightData->padding[0] = 0.0f;
+    directionalLightData->padding[1] = 0.0f;
+    directionalLightData->padding[2] = 0.0f;
 }
 
 void Object3d::CreateCameraData() {

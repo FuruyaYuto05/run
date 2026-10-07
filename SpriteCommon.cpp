@@ -107,11 +107,12 @@ void SpriteCommon::CreateGraphicsPipelineState() {
     ComPtr<IDxcBlob> pixelShaderBlob = dxCommon_->CompileShader(L"resources/shaders/Sprite.PS.hlsl", L"ps_6_0");
     assert(pixelShaderBlob != nullptr);
 
-    // DepthStencilState 
+    // 2Dスプライトは描画順で重ねるため、3D用の深度判定を使用しない。
+    // 同じ深度にある四角形の片側だけが欠ける現象も防止する。
     D3D12_DEPTH_STENCIL_DESC depthStencilDesc{};
-    depthStencilDesc.DepthEnable = true;
-    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
-    depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    depthStencilDesc.DepthEnable = false;
+    depthStencilDesc.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+    depthStencilDesc.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
     // PipelineStateの作成
     D3D12_GRAPHICS_PIPELINE_STATE_DESC graphicsPipelineStateDesc{};
@@ -149,7 +150,8 @@ void SpriteCommon::SetCommonDrawSettings(ID3D12GraphicsCommandList* commandList)
     commandList->SetPipelineState(graphicsPipelineState_.Get());
 
     // 3. プリミティブトポロジーをセットするコマンド
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    // Sprite::CreateVertexDataの6インデックスは2枚の独立した三角形として作られている。
+    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 }
 
 // =============================================================

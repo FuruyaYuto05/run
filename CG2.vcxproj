@@ -185,6 +185,7 @@
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="ObstacleManager.cpp" />
     <ClCompile Include="Player.cpp" />
+	<ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="SpriteCommon.cpp" />
@@ -192,6 +193,7 @@
     <ClCompile Include="StringUtility.cpp" />
     <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="TitleScene.cpp" />
+	<ClCompile Include="TitleSceneState.cpp" />
     <ClCompile Include="TitleRunner.cpp" />
     <ClCompile Include="WinApp.cpp" />
   </ItemGroup>
@@ -288,6 +290,7 @@
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="ObstacleManager.h" />
     <ClInclude Include="Player.h" />
+	<ClInclude Include="PlayerState.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="Sprite.h" />
@@ -296,6 +299,7 @@
     <ClInclude Include="StringUtility.h" />
     <ClInclude Include="TextureManager.h" />
     <ClInclude Include="TitleScene.h" />
+	<ClInclude Include="TitleSceneState.h" />
     <ClInclude Include="TitleRunner.h" />
     <ClInclude Include="WinApp.h" />
   </ItemGroup>

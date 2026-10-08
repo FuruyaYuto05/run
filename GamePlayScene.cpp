@@ -79,12 +79,14 @@ void GamePlayScene::Update() {
 	player_->Update();
 	courseManager_->Update(camera_->GetTranslate().z);
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
-	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
+	if (!player_->IsDead() && !player_->IsInvincible() &&
+		obstacleManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
-		if (player_->IsDead()) {
-			sceneManager_->SetNextScene(std::make_unique<GameOverScene>());
-			return;
-		}
+	}
+	// 死亡Stateが演出待機を終えたときだけ、ゲームオーバーへ遷移する。
+	if (player_->IsGameOverRequested()) {
+		sceneManager_->SetNextScene(std::make_unique<GameOverScene>());
+		return;
 	}
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
 }

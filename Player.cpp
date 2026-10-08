@@ -2,6 +2,7 @@
 #include "Object3d.h"
 #include "Object3dCommon.h"
 #include "Input.h"
+#include "PlayerState.h"
 #include <algorithm>
 
 #ifdef USE_IMGUI
@@ -11,8 +12,6 @@
 namespace {
 constexpr int kLaneCount = 3;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
-constexpr int kInvincibleFrames = 120;
-constexpr int kBlinkIntervalFrames = 6;
 constexpr int kInitialHp = 3;
 }
 
@@ -26,7 +25,9 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	previousLeftPressed_ = input_->Pushkey(DIK_A);
 	previousRightPressed_ = input_->Pushkey(DIK_D);
 	invincibleTimer_ = 0;
+	deathTimer_ = 0;
 	isVisible_ = true;
+	gameOverRequested_ = false;
 	hp_ = kInitialHp;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
@@ -35,23 +36,28 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	object3d_->SetScale({ 0.4f, 0.4f, 0.4f });
 	object3d_->SetTranslate({ 0, 0, 0 });
 	object3d_->SetRotate({ 0, 3.14f, 0 });
+	RequestStateChange(std::make_unique<PlayerNormalState>());
+	ApplyPendingState();
 }
 
 void Player::Finalize() {
+	nextState_.reset();
+	currentState_.reset();
 	object3d_.reset();
 	input_ = nullptr;
 }
 
 // プレイヤーの更新処理
 void Player::Update() {
-	// 無敵状態の処理
-	if (invincibleTimer_ > 0) {
-		--invincibleTimer_;
-		isVisible_ = ((invincibleTimer_ / kBlinkIntervalFrames) % 2) == 0;
-	} else {
-		isVisible_ = true;
+	ApplyPendingState();
+	if (currentState_) {
+		currentState_->Update(*this);
 	}
+	ApplyPendingState();
+	object3d_->Update();
+}
 
+void Player::UpdateLaneMovement() {
 	// 入力処理
 	Math::Vector3 position = object3d_->GetTranslate();
 	// 左右の入力を取得する。押している間はtrueになる。
@@ -85,7 +91,6 @@ void Player::Update() {
 	position.x += std::clamp(targetX - position.x, -moveSpeed_, moveSpeed_);
 
 	object3d_->SetTranslate(position);
-	object3d_->Update();
 }
 
 void Player::Draw() {
@@ -95,13 +100,40 @@ void Player::Draw() {
 }
 
 void Player::OnCollision() {
-	if (!IsInvincible()) {
-		if (hp_ > 0) {
-			--hp_;
-		}
-		invincibleTimer_ = kInvincibleFrames;
-		isVisible_ = false;
+	if (currentState_) {
+		currentState_->OnCollision(*this);
 	}
+	ApplyPendingState();
+}
+
+void Player::RequestStateChange(std::unique_ptr<PlayerState> state) {
+	nextState_ = std::move(state);
+}
+
+void Player::ApplyPendingState() {
+	if (!nextState_) {
+		return;
+	}
+	currentState_ = std::move(nextState_);
+	currentState_->Enter(*this);
+}
+
+void Player::Damage() {
+	if (hp_ > 0) {
+		--hp_;
+	}
+}
+
+bool Player::IsInvincible() const {
+	return currentState_ && currentState_->IsInvincible();
+}
+
+bool Player::IsDead() const {
+	return currentState_ && currentState_->IsDead();
+}
+
+const char* Player::GetStateName() const {
+	return currentState_ ? currentState_->GetName() : "None";
 }
 
 // プレイヤーの位置を取得する
@@ -123,6 +155,7 @@ void Player::DrawImGui() {
 	ImGui::Combo("Target Lane", &laneIndex_, "Left\0Center\0Right\0");
 	ImGui::Text("Target X: %.2f", kLanePositions[laneIndex_]);
 	ImGui::Text("Invincible: %s", IsInvincible() ? "true" : "false");
+	ImGui::Text("State: %s", GetStateName());
 	ImGui::Text("Invincible Timer: %d", invincibleTimer_);
 	ImGui::Text("HP: %d", hp_);
 

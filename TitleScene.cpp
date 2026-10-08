@@ -9,6 +9,7 @@
 #include "SpriteCommon.h"
 #include "TextureManager.h"
 #include "TitleRunner.h"
+#include "TitleSceneState.h"
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -109,7 +110,6 @@ void TitleScene::Initialize() {
 	fadeSprite_->SetSize({ 1280.0f, 720.0f });
 	fadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 
-	phase_ = Phase::Intro;
 	selectedMenu_ = MenuItem::Play;
 	menuReady_ = false;
 	phaseTime_ = 0.0f;
@@ -121,10 +121,14 @@ void TitleScene::Initialize() {
 	previousUpPressed_ = input_->Pushkey(DIK_UP) || input_->Pushkey(DIK_W);
 	previousDownPressed_ = input_->Pushkey(DIK_DOWN) || input_->Pushkey(DIK_S);
 	ApplyLogoTransform(0.1f, 80.0f, -0.12f, 0.0f);
+	RequestStateChange(std::make_unique<TitleIntroState>());
+	ApplyPendingState();
 	ApplyMenuTransform();
 }
 
 void TitleScene::Finalize() {
+	nextState_.reset();
+	currentState_.reset();
 	runner_->Finalize();
 	runner_.reset();
 	camera_.reset();
@@ -150,105 +154,20 @@ void TitleScene::Update() {
 	}
 
 	const bool enterPressed = input_->Pushkey(DIK_RETURN);
-	const bool enterTriggered = enterPressed && !previousEnterPressed_;
+	enterTriggered_ = enterPressed && !previousEnterPressed_;
 	previousEnterPressed_ = enterPressed;
 	const bool upPressed = input_->Pushkey(DIK_UP) || input_->Pushkey(DIK_W);
 	const bool downPressed = input_->Pushkey(DIK_DOWN) || input_->Pushkey(DIK_S);
-	const bool upTriggered = upPressed && !previousUpPressed_;
-	const bool downTriggered = downPressed && !previousDownPressed_;
+	upTriggered_ = upPressed && !previousUpPressed_;
+	downTriggered_ = downPressed && !previousDownPressed_;
 	previousUpPressed_ = upPressed;
 	previousDownPressed_ = downPressed;
 	menuReady_ = totalTime_ >= kExitSlideDelay + kMenuSlideDuration;
 
-	switch (phase_) {
-	case Phase::Intro: {
-		const float t = std::clamp(phaseTime_ / kIntroDuration, 0.0f, 1.0f);
-		const float eased = EaseOutBack(t);
-		const float scale = 0.1f + 0.9f * eased;
-		const float yOffset = 80.0f * (1.0f - eased);
-		const float rotation = -0.12f * (1.0f - t);
-		ApplyLogoTransform(scale, yOffset, rotation, SmoothStep(t));
-		if (t >= 1.0f) {
-			phase_ = Phase::Idle;
-			phaseTime_ = 0.0f;
-		}
-		break;
+	if (currentState_) {
+		currentState_->Update(*this);
 	}
-	case Phase::Idle: {
-		inactivityTime_ += kDeltaTime;
-		const float wave = std::sin(totalTime_ * 2.8f);
-
-		// 普段は小さく揺れ、一定間隔で一度だけ素早く回転する。
-		float spinProgress = 0.0f;
-		if (phaseTime_ >= kLogoSpinDelay) {
-			const float spinCycle = std::fmod(phaseTime_ - kLogoSpinDelay, kLogoSpinInterval);
-			if (spinCycle < kLogoSpinDuration) {
-				spinProgress = SmoothStep(spinCycle / kLogoSpinDuration);
-			}
-		}
-
-		const float spinPulse = std::sin(spinProgress * 3.1415927f);
-		const float scale = 1.0f + wave * 0.012f + spinPulse * 0.04f;
-		const float yOffset = wave * 6.0f;
-		const float wobbleRotation = std::sin(totalTime_ * 1.7f) * 0.012f;
-		const float spinRotationX = spinProgress * kTwoPi;
-		ApplyLogoTransform(scale, yOffset, wobbleRotation, 1.0f, spinRotationX);
-		if (inactivityTime_ >= kRestartWaitDuration) {
-			phase_ = Phase::RestartFadeOut;
-			phaseTime_ = 0.0f;
-		}
-		break;
-	}
-	case Phase::RestartFadeOut: {
-		const float wave = std::sin(totalTime_ * 2.8f);
-		ApplyLogoTransform(
-			1.0f + wave * 0.012f,
-			wave * 6.0f,
-			std::sin(totalTime_ * 1.7f) * 0.012f,
-			1.0f
-		);
-		const float t = std::clamp(phaseTime_ / kRestartFadeDuration, 0.0f, 1.0f);
-		fadeAlpha_ = SmoothStep(t);
-		if (t >= 1.0f) {
-			phase_ = Phase::Intro;
-			phaseTime_ = 0.0f;
-			totalTime_ = 0.0f;
-			inactivityTime_ = 0.0f;
-			menuReady_ = false;
-			selectedMenu_ = MenuItem::Play;
-			fadeAlpha_ = 1.0f;
-			restartFadingIn_ = true;
-			runner_->ResetRun();
-			ApplyLogoTransform(0.1f, 80.0f, -0.12f, 0.0f);
-		}
-		break;
-	}
-	case Phase::Exit: {
-		const float t = std::clamp(phaseTime_ / kExitDuration, 0.0f, 1.0f);
-		const float eased = SmoothStep(t);
-		ApplyLogoTransform(1.0f + eased * 0.15f, -80.0f * eased, 0.0f, 1.0f - eased);
-		if (t >= 1.0f) {
-			sceneManager_->SetNextScene(std::make_unique<GamePlayScene>());
-		}
-		break;
-	}
-	}
-
-	if (phase_ == Phase::Idle && menuReady_) {
-		if (upTriggered || downTriggered) {
-			inactivityTime_ = 0.0f;
-			selectedMenu_ = selectedMenu_ == MenuItem::Play ? MenuItem::Exit : MenuItem::Play;
-		}
-
-		if (enterTriggered) {
-			if (selectedMenu_ == MenuItem::Play) {
-				phase_ = Phase::Exit;
-				phaseTime_ = 0.0f;
-			} else {
-				PostQuitMessage(0);
-			}
-		}
-	}
+	ApplyPendingState();
 
 	runner_->Update();
 	UpdateOrbitCamera();
@@ -267,6 +186,7 @@ void TitleScene::Update() {
 #ifdef USE_IMGUI
 	ImGui::Begin("Title Scene");
 	ImGui::Text("Press Enter to Start");
+	ImGui::Text("State: %s", currentState_ ? currentState_->GetName() : "None");
 	ImGui::Text("Animation Time: %.2f", totalTime_);
 	ImGui::Text("Selected: %s", selectedMenu_ == MenuItem::Play ? "PLAY" : "EXIT");
 	ImGui::Text("Menu Input: %s", menuReady_ ? "Ready" : "Waiting for slide-in");
@@ -274,6 +194,18 @@ void TitleScene::Update() {
 	ImGui::End();
 	runner_->DrawImGui();
 #endif
+}
+
+void TitleScene::RequestStateChange(std::unique_ptr<TitleSceneState> state) {
+	nextState_ = std::move(state);
+}
+
+void TitleScene::ApplyPendingState() {
+	if (!nextState_) {
+		return;
+	}
+	currentState_ = std::move(nextState_);
+	currentState_->Enter(*this);
 }
 
 void TitleScene::UpdateOrbitCamera() {
@@ -350,7 +282,7 @@ void TitleScene::ApplyMenuTransform() {
 	const float exitX = kExitSlideStartX + (kMenuX - kExitSlideStartX) * EaseOutBack(exitT);
 
 	float menuAlpha = SmoothStep(exitT);
-	if (phase_ == Phase::Exit) {
+	if (currentState_ && currentState_->IsExit()) {
 		menuAlpha *= 1.0f - std::clamp(phaseTime_ / kExitDuration, 0.0f, 1.0f);
 	}
 	const float pulse = 1.0f + std::sin(totalTime_ * 5.0f) * 0.04f;

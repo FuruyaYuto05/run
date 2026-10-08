@@ -6,6 +6,11 @@
 class Sprite;
 class Camera;
 class TitleRunner;
+class TitleSceneState;
+class TitleIntroState;
+class TitleIdleState;
+class TitleRestartFadeState;
+class TitleExitState;
 
 class TitleScene : public BaseScene {
 public:
@@ -16,12 +21,11 @@ public:
 	void Update() override;
 	void Draw() override;
 private:
-	enum class Phase {
-		Intro,
-		Idle,
-		RestartFadeOut,
-		Exit,
-	};
+	friend class TitleIntroState;
+	friend class TitleIdleState;
+	friend class TitleRestartFadeState;
+	friend class TitleExitState;
+
 	enum class MenuItem {
 		Play,
 		Exit,
@@ -29,6 +33,8 @@ private:
 
 	void ApplyLogoTransform(float scale, float yOffset, float rotationZ, float alpha, float rotationX = 0.0f);
 	void ApplyMenuTransform();
+	void RequestStateChange(std::unique_ptr<TitleSceneState> state);
+	void ApplyPendingState();
 	void UpdateOrbitCamera();
 	void SelectNextOrbitTarget();
 	float NextRandom01();
@@ -42,7 +48,8 @@ private:
 	std::unique_ptr<Sprite> exitSprite_;
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<TitleRunner> runner_;
-	Phase phase_ = Phase::Intro;
+	std::unique_ptr<TitleSceneState> currentState_;
+	std::unique_ptr<TitleSceneState> nextState_;
 	MenuItem selectedMenu_ = MenuItem::Play;
 	bool menuReady_ = false;
 	float phaseTime_ = 0.0f;
@@ -62,4 +69,7 @@ private:
 	bool previousEnterPressed_ = false;
 	bool previousUpPressed_ = false;
 	bool previousDownPressed_ = false;
+	bool enterTriggered_ = false;
+	bool upTriggered_ = false;
+	bool downTriggered_ = false;
 };

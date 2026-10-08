@@ -135,9 +135,15 @@
     <ClCompile Include="Player.cpp">
       <Filter>Game\Player</Filter>
     </ClCompile>
+	<ClCompile Include="PlayerState.cpp">
+	  <Filter>Game\Player</Filter>
+	</ClCompile>
     <ClCompile Include="TitleScene.cpp">
       <Filter>Game\Scenes\Title</Filter>
     </ClCompile>
+	<ClCompile Include="TitleSceneState.cpp">
+	  <Filter>Game\Scenes\Title</Filter>
+	</ClCompile>
     <ClCompile Include="TitleRunner.cpp">
       <Filter>Game\Scenes\Title</Filter>
     </ClCompile>
@@ -286,6 +292,9 @@
     <ClInclude Include="TitleScene.h">
       <Filter>Game\Scenes\Title</Filter>
     </ClInclude>
+	<ClInclude Include="TitleSceneState.h">
+	  <Filter>Game\Scenes\Title</Filter>
+	</ClInclude>
     <ClInclude Include="TitleRunner.h">
       <Filter>Game\Scenes\Title</Filter>
     </ClInclude>
@@ -298,6 +307,9 @@
     <ClInclude Include="Player.h">
       <Filter>Game\Player</Filter>
     </ClInclude>
+	<ClInclude Include="PlayerState.h">
+	  <Filter>Game\Player</Filter>
+	</ClInclude>
     <ClInclude Include="Obstacle.h">
       <Filter>Game\Scenes\Obstacle</Filter>
     </ClInclude>

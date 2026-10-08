@@ -29,6 +29,10 @@ void SceneManager::Update() {
 		scene_->SetSceneManager(this);
 		scene_->SetInput(input_);
 		scene_->Initialize();
+
+		// 初期化と更新を同一フレームで実行しない。
+		// 入力トリガーやフレーム時間が二重に消費されることを防ぐ。
+		return;
 	}
 
 	// 実行中のシーンを更新する

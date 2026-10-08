@@ -24,6 +24,9 @@ public:
 	void Draw() override;
 
 private:
+	void InitializeSceneReveal();
+	void UpdateSceneReveal();
+
 	Object3dCommon* object3dCommon_ = nullptr;
 	SoundData soundData_{};
 	std::unique_ptr<Camera> camera_;
@@ -32,6 +35,10 @@ private:
 	std::unique_ptr<ObstacleManager> obstacleManager_;
 	Model* animatedModel_ = nullptr;
 	std::vector<std::unique_ptr<Sprite>> hpSprites_;
+	std::unique_ptr<Sprite> revealLeftSprite_;
+	std::unique_ptr<Sprite> revealRightSprite_;
 	Animation animation_{};
 	float animationTime_ = 0.0f;
+	float sceneRevealTime_ = 0.0f;
+	bool sceneRevealActive_ = true;
 };

@@ -40,8 +40,14 @@ constexpr float kLogoSpinInterval = 4.0f;
 constexpr float kLogoSpinDuration = 0.45f;
 constexpr float kRestartWaitDuration = 8.0f;
 constexpr float kRestartFadeDuration = 0.75f;
+constexpr float kHandCoverDuration = 1.15f;
+constexpr float kHandFadeStart = 0.72f;
+constexpr float kHandFadeDuration = 0.30f;
 constexpr float kTwoPi = 6.2831853f;
 constexpr float kRunnerFocusHeight = 2.5f;
+constexpr int kHandColumns = 6;
+constexpr int kHandRows = 4;
+constexpr int kHandStampCount = kHandColumns * kHandRows;
 
 float EaseOutBack(float t) {
 	constexpr float c1 = 1.70158f;
@@ -83,6 +89,8 @@ void TitleScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/title/PLAY.png");
 	TextureManager::GetInstance()->LoadTexture("resources/title/EXIT.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
+	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
+	TextureManager::GetInstance()->LoadTexture("resources/scene/handR.png");
 
 	shadowSprite_ = std::make_unique<Sprite>();
 	shadowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/title.png");
@@ -108,6 +116,7 @@ void TitleScene::Initialize() {
 	fadeSprite_->SetPosition({ 640.0f, 360.0f });
 	fadeSprite_->SetSize({ 1280.0f, 720.0f });
 	fadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
+	InitializeHandTransition();
 
 	phase_ = Phase::Intro;
 	selectedMenu_ = MenuItem::Play;
@@ -128,6 +137,7 @@ void TitleScene::Finalize() {
 	runner_->Finalize();
 	runner_.reset();
 	camera_.reset();
+	handStamps_.clear();
 	playGlowSprite_.reset();
 	exitGlowSprite_.reset();
 	fadeSprite_.reset();
@@ -224,10 +234,14 @@ void TitleScene::Update() {
 		break;
 	}
 	case Phase::Exit: {
-		const float t = std::clamp(phaseTime_ / kExitDuration, 0.0f, 1.0f);
-		const float eased = SmoothStep(t);
+		const float logoT = std::clamp(phaseTime_ / kExitDuration, 0.0f, 1.0f);
+		const float eased = SmoothStep(logoT);
 		ApplyLogoTransform(1.0f + eased * 0.15f, -80.0f * eased, 0.0f, 1.0f - eased);
-		if (t >= 1.0f) {
+		UpdateHandTransition();
+		const float blackT = std::clamp(
+			(phaseTime_ - kHandFadeStart) / kHandFadeDuration, 0.0f, 1.0f);
+		fadeAlpha_ = SmoothStep(blackT);
+		if (phaseTime_ >= kHandCoverDuration) {
 			sceneManager_->SetNextScene(std::make_unique<GamePlayScene>());
 		}
 		break;
@@ -244,6 +258,8 @@ void TitleScene::Update() {
 			if (selectedMenu_ == MenuItem::Play) {
 				phase_ = Phase::Exit;
 				phaseTime_ = 0.0f;
+				fadeAlpha_ = 0.0f;
+				ResetHandTransition();
 			} else {
 				PostQuitMessage(0);
 			}
@@ -274,6 +290,57 @@ void TitleScene::Update() {
 	ImGui::End();
 	runner_->DrawImGui();
 #endif
+}
+
+void TitleScene::InitializeHandTransition() {
+	handStamps_.clear();
+	handStamps_.reserve(kHandStampCount);
+	for (int i = 0; i < kHandStampCount; ++i) {
+		HandStamp stamp{};
+		stamp.sprite = std::make_unique<Sprite>();
+		stamp.sprite->Initialize(
+			SpriteCommon::GetInstance(),
+			NextHandRandom01() < 0.5f ? "resources/scene/handL.png" : "resources/scene/handR.png");
+		handStamps_.push_back(std::move(stamp));
+	}
+	ResetHandTransition();
+}
+
+void TitleScene::ResetHandTransition() {
+	constexpr float kCellWidth = 1280.0f / static_cast<float>(kHandColumns);
+	constexpr float kCellHeight = 720.0f / static_cast<float>(kHandRows);
+
+	for (size_t i = 0; i < handStamps_.size(); ++i) {
+		HandStamp& stamp = handStamps_[i];
+		const int column = static_cast<int>(i) % kHandColumns;
+		const int row = static_cast<int>(i) / kHandColumns;
+		const float jitterX = (NextHandRandom01() - 0.5f) * kCellWidth * 0.90f;
+		const float jitterY = (NextHandRandom01() - 0.5f) * kCellHeight * 0.80f;
+		const float x = (static_cast<float>(column) + 0.5f) * kCellWidth + jitterX;
+		const float y = (static_cast<float>(row) + 0.5f) * kCellHeight + jitterY;
+		const float size = 300.0f + NextHandRandom01() * 200.0f;
+		const float rotation = -0.75f + NextHandRandom01() * 1.50f;
+
+		stamp.baseSize = { size, size };
+		stamp.appearTime = NextHandRandom01() * 0.68f;
+		stamp.sprite->SetPosition({ x, y });
+		stamp.sprite->SetRotation({ 0.0f, 0.0f, rotation });
+		stamp.sprite->SetSize({ stamp.baseSize.x * 0.65f, stamp.baseSize.y * 0.65f });
+		stamp.sprite->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+		stamp.sprite->Update();
+	}
+}
+
+void TitleScene::UpdateHandTransition() {
+	constexpr float kStampPopDuration = 0.14f;
+	for (HandStamp& stamp : handStamps_) {
+		const float t = std::clamp(
+			(phaseTime_ - stamp.appearTime) / kStampPopDuration, 0.0f, 1.0f);
+		const float scale = 0.65f + EaseOutBack(t) * 0.35f;
+		stamp.sprite->SetSize({ stamp.baseSize.x * scale, stamp.baseSize.y * scale });
+		stamp.sprite->SetColor({ 1.0f, 1.0f, 1.0f, SmoothStep(t) });
+		stamp.sprite->Update();
+	}
 }
 
 void TitleScene::UpdateOrbitCamera() {
@@ -343,6 +410,11 @@ float TitleScene::NextRandom01() {
 	return static_cast<float>((orbitRandomState_ >> 8) & 0x00FFFFFFu) / 16777215.0f;
 }
 
+float TitleScene::NextHandRandom01() {
+	handRandomState_ = handRandomState_ * 1664525u + 1013904223u;
+	return static_cast<float>((handRandomState_ >> 8) & 0x00FFFFFFu) / 16777215.0f;
+}
+
 void TitleScene::ApplyMenuTransform() {
 	const float playT = std::clamp((totalTime_ - kPlaySlideDelay) / kMenuSlideDuration, 0.0f, 1.0f);
 	const float exitT = std::clamp((totalTime_ - kExitSlideDelay) / kMenuSlideDuration, 0.0f, 1.0f);
@@ -407,5 +479,8 @@ void TitleScene::Draw() {
 	exitGlowSprite_->Draw(commandList);
 	playSprite_->Draw(commandList);
 	exitSprite_->Draw(commandList);
+	for (const HandStamp& stamp : handStamps_) {
+		stamp.sprite->Draw(commandList);
+	}
 	fadeSprite_->Draw(commandList);
 }

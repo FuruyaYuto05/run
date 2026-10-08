@@ -336,6 +336,15 @@
     <None Include="resources\title\EXIT.png">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include="resources\human\white.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\scene\handL.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\scene\handR.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="CG2.rc">

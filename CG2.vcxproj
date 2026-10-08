@@ -321,6 +321,14 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>resources\human\white.png</TargetPath>
     </None>
+    <None Include="resources\scene\handL.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\scene\handL.png</TargetPath>
+    </None>
+    <None Include="resources\scene\handR.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\scene\handR.png</TargetPath>
+    </None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />
     <None Include="Skybox.hlsli" />

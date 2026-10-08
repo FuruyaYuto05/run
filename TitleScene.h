@@ -1,7 +1,9 @@
 #pragma once
 #include "BaseScene.h"
+#include "Math.h"
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 class Sprite;
 class Camera;
@@ -29,9 +31,13 @@ private:
 
 	void ApplyLogoTransform(float scale, float yOffset, float rotationZ, float alpha, float rotationX = 0.0f);
 	void ApplyMenuTransform();
+	void InitializeHandTransition();
+	void ResetHandTransition();
+	void UpdateHandTransition();
 	void UpdateOrbitCamera();
 	void SelectNextOrbitTarget();
 	float NextRandom01();
+	float NextHandRandom01();
 
 	std::unique_ptr<Sprite> titleSprite_;
 	std::unique_ptr<Sprite> shadowSprite_;
@@ -42,6 +48,12 @@ private:
 	std::unique_ptr<Sprite> exitSprite_;
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<TitleRunner> runner_;
+	struct HandStamp {
+		std::unique_ptr<Sprite> sprite;
+		Math::Vector2 baseSize{};
+		float appearTime = 0.0f;
+	};
+	std::vector<HandStamp> handStamps_;
 	Phase phase_ = Phase::Intro;
 	MenuItem selectedMenu_ = MenuItem::Play;
 	bool menuReady_ = false;
@@ -58,6 +70,7 @@ private:
 	float orbitTargetHeight_ = 3.0f;
 	float orbitChangeTimer_ = 0.0f;
 	uint32_t orbitRandomState_ = 0x6D2B79F5u;
+	uint32_t handRandomState_ = 0xA341316Cu;
 	bool restartFadingIn_ = false;
 	bool previousEnterPressed_ = false;
 	bool previousUpPressed_ = false;

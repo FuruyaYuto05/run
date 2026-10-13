@@ -1,9 +1,6 @@
 #pragma once
 
 #include "BaseScene.h"
-#include <memory>
-
-class Sprite;
 
 class GameOverScene : public BaseScene {
 public:
@@ -16,6 +13,5 @@ public:
 	void Draw() override;
 
 private:
-	std::unique_ptr<Sprite> backgroundSprite_;
-	bool previousEnterPressed_ = false;
+	float elapsedTime_ = 0.0f;
 };

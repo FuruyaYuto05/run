@@ -24,8 +24,8 @@ constexpr float kIntroDuration = 1.0f;
 constexpr float kExitDuration = 0.45f;
 constexpr float kLogoX = 670.0f;
 constexpr float kLogoY = 245.0f;
-constexpr float kLogoWidth = 704.0f;
-constexpr float kLogoHeight = 120.0f;
+constexpr float kLogoWidth = 850.0f;
+constexpr float kLogoHeight = 145.0f;
 constexpr float kMenuX = 640.0f;
 constexpr float kPlayY = 430.0f;
 constexpr float kExitY = 525.0f;
@@ -69,6 +69,8 @@ TitleScene::~TitleScene() = default;
 void TitleScene::Initialize() {
 	// 走るキャラクターを映す3Dカメラを準備する。
 	Object3dCommon* object3dCommon = Object3dCommon::GetInstance();
+	// タイトルも祟りの雰囲気に合う暗い夜色にする。
+	object3dCommon->GetDxCommon()->SetClearColor(0.015f, 0.02f, 0.04f, 1.0f);
 	camera_ = std::make_unique<Camera>();
 	camera_->SetRotate({ 0.15f, 0.0f, 0.0f });
 	camera_->SetTranslate({ 0.0f, 2.5f, -12.0f });

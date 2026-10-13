@@ -47,6 +47,8 @@ GamePlayScene::~GamePlayScene() = default;
 void GamePlayScene::Initialize() {
 	// ゲームで使用する画像・カメラを準備する。
 	object3dCommon_ = Object3dCommon::GetInstance();
+	// 仮背景として、祟りの雰囲気に合う暗い夜色にする。
+	object3dCommon_->GetDxCommon()->SetClearColor(0.015f, 0.02f, 0.04f, 1.0f);
 	TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 	TextureManager::GetInstance()->LoadTexture("resources/life.png");
 	TextureManager::GetInstance()->LoadTexture("monsterBall.png");

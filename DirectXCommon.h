@@ -80,6 +80,13 @@ public:
 	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVGPUDescriptorHandle(uint32_t index) const;
 
 	ID3D12DescriptorHeap* GetSRVDescriptorHeap() const { return srvDescriptorHeap_.Get(); }
+	// シーンごとに背景のクリアカラーを変更する。
+	void SetClearColor(float red, float green, float blue, float alpha) {
+		clearColor_[0] = red;
+		clearColor_[1] = green;
+		clearColor_[2] = blue;
+		clearColor_[3] = alpha;
+	}
 	void PreDraw();
 	void PostDraw();
 
@@ -131,6 +138,7 @@ private:
 
 	D3D12_VIEWPORT viewport_;
 	D3D12_RECT scissorRect_;
+	float clearColor_[4] = { 0.1f, 0.25f, 0.5f, 1.0f };
 
 
 	// --- 新しいプライベート関数 (Initializeから分割) ---

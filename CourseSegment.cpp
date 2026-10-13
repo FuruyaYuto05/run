@@ -8,10 +8,10 @@ CourseSegment::~CourseSegment() = default;
 void CourseSegment::Initialize(Object3dCommon* object3dCommon, const Math::Vector3& initialPosition) {
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
-	// 平面モデルを設定
-	object3d_->SetModel("plane.obj");
+	// 参道用の平面モデルを設定する。
+	object3d_->SetModel("road.obj");
 
-	// plane.objを横幅5、奥行き12程度の仮足場として使用する
+	// road.objを横幅5、奥行き12程度の道として使用する。
 	object3d_->SetScale({ 2.5f, 6.0f, 1.0f });
 	object3d_->SetRotate({ -1.5707963f, 0.0f, 0.0f });
 	object3d_->SetTranslate(initialPosition);

@@ -324,9 +324,9 @@ void Model::LoadGltfFile(const std::string& directoryPath, const std::string& fi
 
             assert(face.mNumIndices == 3);
 
-            for (uint32_t element = 0; element < face.mNumIndices; ++element) {
-                uint32_t vertexIndex = face.mIndices[element];
-
+            // X反転で座標系を変えたため、頂点順も反転して表裏を合わせる。
+            for (int32_t element = 2; element >= 0; --element) {
+                const uint32_t vertexIndex = face.mIndices[element];
                 modelData_.indices.push_back(vertexOffset + vertexIndex);
             }
         }

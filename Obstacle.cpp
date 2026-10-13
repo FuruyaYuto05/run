@@ -8,8 +8,8 @@ Obstacle::~Obstacle() = default;
 void Obstacle::Initialize(Object3dCommon* object3dCommon, const Math::Vector3& initialPosition) {
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
-	object3d_->SetModel("AnimatedCube.gltf");
-	object3d_->SetScale({ 0.6f, 0.6f, 0.6f });
+	object3d_->SetModel("tyoutin.obj");
+	object3d_->SetScale({ 1.0f, 1.0f, 1.0f });
 	object3d_->SetTranslate(initialPosition);
 }
 

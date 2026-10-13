@@ -329,6 +329,34 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>resources\scene\handR.png</TargetPath>
     </None>
+    <None Include="resources\road.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\road.obj</TargetPath>
+    </None>
+    <None Include="resources\road.mtl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\road.mtl</TargetPath>
+    </None>
+    <None Include="resources\road.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\road.png</TargetPath>
+    </None>
+    <None Include="resources\life.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\life.png</TargetPath>
+    </None>
+    <None Include="resources\tyoutin.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\tyoutin.obj</TargetPath>
+    </None>
+    <None Include="resources\tyoutin.mtl">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\tyoutin.mtl</TargetPath>
+    </None>
+    <None Include="resources\tyoutinC.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>resources\tyoutinC.png</TargetPath>
+    </None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />
     <None Include="Skybox.hlsli" />

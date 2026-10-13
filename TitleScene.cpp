@@ -18,6 +18,7 @@
 #endif
 
 namespace {
+// タイトル演出の時間・配置設定。
 constexpr float kDeltaTime = 1.0f / 60.0f;
 constexpr float kIntroDuration = 1.0f;
 constexpr float kExitDuration = 0.45f;
@@ -66,6 +67,7 @@ TitleScene::TitleScene() = default;
 TitleScene::~TitleScene() = default;
 
 void TitleScene::Initialize() {
+	// 走るキャラクターを映す3Dカメラを準備する。
 	Object3dCommon* object3dCommon = Object3dCommon::GetInstance();
 	camera_ = std::make_unique<Camera>();
 	camera_->SetRotate({ 0.15f, 0.0f, 0.0f });
@@ -73,6 +75,7 @@ void TitleScene::Initialize() {
 	object3dCommon->SetDefaultCamera(camera_.get());
 	camera_->Update();
 
+	// タイトル背景で走るキャラクターを生成する。
 	runner_ = std::make_unique<TitleRunner>();
 	runner_->Initialize(object3dCommon, camera_.get());
 	orbitAngle_ = 0.0f;
@@ -85,6 +88,7 @@ void TitleScene::Initialize() {
 	orbitChangeTimer_ = 0.0f;
 	UpdateOrbitCamera();
 
+	// タイトル画面で使用する画像を読み込む。
 	TextureManager::GetInstance()->LoadTexture("resources/title/title.png");
 	TextureManager::GetInstance()->LoadTexture("resources/title/PLAY.png");
 	TextureManager::GetInstance()->LoadTexture("resources/title/EXIT.png");
@@ -92,6 +96,7 @@ void TitleScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handR.png");
 
+	// ロゴ・メニュー・発光用スプライトを生成する。
 	shadowSprite_ = std::make_unique<Sprite>();
 	shadowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/title.png");
 
@@ -118,6 +123,7 @@ void TitleScene::Initialize() {
 	fadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
 	InitializeHandTransition();
 
+	// タイトル演出と入力状態を初期値に戻す。
 	phase_ = Phase::Intro;
 	selectedMenu_ = MenuItem::Play;
 	menuReady_ = false;
@@ -148,6 +154,7 @@ void TitleScene::Finalize() {
 }
 
 void TitleScene::Update() {
+	// 各演出で共通して使用する経過時間を進める。
 	phaseTime_ += kDeltaTime;
 	totalTime_ += kDeltaTime;
 
@@ -159,6 +166,7 @@ void TitleScene::Update() {
 		}
 	}
 
+	// キーを押した瞬間だけ反応する入力を作る。
 	const bool enterPressed = input_->Pushkey(DIK_RETURN);
 	const bool enterTriggered = enterPressed && !previousEnterPressed_;
 	previousEnterPressed_ = enterPressed;
@@ -172,6 +180,7 @@ void TitleScene::Update() {
 
 	switch (phase_) {
 	case Phase::Intro: {
+		// ロゴを奥から手前へ飛び出させる。
 		const float t = std::clamp(phaseTime_ / kIntroDuration, 0.0f, 1.0f);
 		const float eased = EaseOutBack(t);
 		const float scale = 0.1f + 0.9f * eased;
@@ -185,6 +194,7 @@ void TitleScene::Update() {
 		break;
 	}
 	case Phase::Idle: {
+		// 入力待ち中はロゴを揺らし、一定間隔で回転させる。
 		inactivityTime_ += kDeltaTime;
 		const float wave = std::sin(totalTime_ * 2.8f);
 
@@ -210,6 +220,7 @@ void TitleScene::Update() {
 		break;
 	}
 	case Phase::RestartFadeOut: {
+		// 無操作が続いたら暗転し、最初の演出へ戻す。
 		const float wave = std::sin(totalTime_ * 2.8f);
 		ApplyLogoTransform(
 			1.0f + wave * 0.012f,
@@ -234,6 +245,7 @@ void TitleScene::Update() {
 		break;
 	}
 	case Phase::Exit: {
+		// 手形で画面を覆ってからゲームシーンへ移る。
 		const float logoT = std::clamp(phaseTime_ / kExitDuration, 0.0f, 1.0f);
 		const float eased = SmoothStep(logoT);
 		ApplyLogoTransform(1.0f + eased * 0.15f, -80.0f * eased, 0.0f, 1.0f - eased);
@@ -248,6 +260,7 @@ void TitleScene::Update() {
 	}
 	}
 
+	// メニュー表示後に選択と決定を受け付ける。
 	if (phase_ == Phase::Idle && menuReady_) {
 		if (upTriggered || downTriggered) {
 			inactivityTime_ = 0.0f;
@@ -266,6 +279,7 @@ void TitleScene::Update() {
 		}
 	}
 
+	// 3Dキャラクター・カメラ・2D表示を更新する。
 	runner_->Update();
 	UpdateOrbitCamera();
 	camera_->Update();
@@ -293,6 +307,7 @@ void TitleScene::Update() {
 }
 
 void TitleScene::InitializeHandTransition() {
+	// 左右の手形画像から、遷移に使うスプライトをまとめて作る。
 	handStamps_.clear();
 	handStamps_.reserve(kHandStampCount);
 	for (int i = 0; i < kHandStampCount; ++i) {
@@ -307,6 +322,7 @@ void TitleScene::InitializeHandTransition() {
 }
 
 void TitleScene::ResetHandTransition() {
+	// 画面全体を覆える範囲で位置・大きさ・角度をランダム化する。
 	constexpr float kCellWidth = 1280.0f / static_cast<float>(kHandColumns);
 	constexpr float kCellHeight = 720.0f / static_cast<float>(kHandRows);
 
@@ -332,6 +348,7 @@ void TitleScene::ResetHandTransition() {
 }
 
 void TitleScene::UpdateHandTransition() {
+	// 出現時刻を迎えた手形を短時間で拡大表示する。
 	constexpr float kStampPopDuration = 0.14f;
 	for (HandStamp& stamp : handStamps_) {
 		const float t = std::clamp(
@@ -348,6 +365,7 @@ void TitleScene::UpdateOrbitCamera() {
 		return;
 	}
 
+	// 一定時間ごとに次のカメラ構図を選び直す。
 	orbitChangeTimer_ -= kDeltaTime;
 	if (orbitChangeTimer_ <= 0.0f) {
 		SelectNextOrbitTarget();
@@ -416,6 +434,7 @@ float TitleScene::NextHandRandom01() {
 }
 
 void TitleScene::ApplyMenuTransform() {
+	// PLAYとEXITを左右から滑らせ、選択中の項目を発光させる。
 	const float playT = std::clamp((totalTime_ - kPlaySlideDelay) / kMenuSlideDuration, 0.0f, 1.0f);
 	const float exitT = std::clamp((totalTime_ - kExitSlideDelay) / kMenuSlideDuration, 0.0f, 1.0f);
 	const float playX = kPlaySlideStartX + (kMenuX - kPlaySlideStartX) * EaseOutBack(playT);
@@ -454,6 +473,7 @@ void TitleScene::ApplyMenuTransform() {
 }
 
 void TitleScene::ApplyLogoTransform(float scale, float yOffset, float rotationZ, float alpha, float rotationX) {
+	// ロゴ本体と影へ同じ変形を適用する。
 	const Math::Vector2 size = { kLogoWidth * scale, kLogoHeight * scale };
 	const Math::Vector2 position = { kLogoX, kLogoY + yOffset };
 
@@ -469,6 +489,7 @@ void TitleScene::ApplyLogoTransform(float scale, float yOffset, float rotationZ,
 }
 
 void TitleScene::Draw() {
+	// 3Dを先に描き、その上へタイトルUIと遷移演出を重ねる。
 	runner_->Draw();
 
 	ID3D12GraphicsCommandList* commandList = Object3dCommon::GetInstance()->GetDxCommon()->GetCommandList();

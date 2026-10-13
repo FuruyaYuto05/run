@@ -7,7 +7,8 @@ namespace {
 constexpr int kObstacleCount = 5;
 constexpr float kFirstObstacleZ = 20.0f;
 constexpr float kObstacleSpacing = 15.0f;
-constexpr float kObstacleY = 0.6f;
+// tyoutin.objは原点から下へ1mあるため、底面が床に合う高さへ置く。
+constexpr float kObstacleY = 1.0f;
 constexpr float kRecycleOffset = 2.0f;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
 constexpr int kLaneCount = 3;

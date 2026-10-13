@@ -18,33 +18,60 @@
 #include <imgui.h>
 #endif
 
+namespace {
+constexpr float kDeltaTime = 1.0f / 60.0f;
+constexpr float kOpeningHoldDuration = 0.95f;
+constexpr float kOpeningMoveDuration = 1.50f;
+constexpr float kPi = 3.1415927f;
+constexpr Math::Vector3 kOpeningCameraPosition = { 0.0f, 2.4f, 3.5f };
+constexpr Math::Vector3 kOpeningCameraRotation = { 0.0f, kPi, 0.0f };
+constexpr Math::Vector3 kGameplayCameraPosition = { 0.0f, 4.0f, -10.0f };
+constexpr Math::Vector3 kGameplayCameraRotation = { 0.3f, 0.0f, 0.0f };
+
+float SmoothStep(float t) {
+	return t * t * (3.0f - 2.0f * t);
+}
+
+Math::Vector3 LerpVector3(const Math::Vector3& start, const Math::Vector3& end, float t) {
+	return {
+		start.x + (end.x - start.x) * t,
+		start.y + (end.y - start.y) * t,
+		start.z + (end.z - start.z) * t,
+	};
+}
+}
+
 GamePlayScene::GamePlayScene() = default;
 GamePlayScene::~GamePlayScene() = default;
 
 void GamePlayScene::Initialize() {
+	// ゲームで使用する画像・カメラを準備する。
 	object3dCommon_ = Object3dCommon::GetInstance();
-	soundData_ = Sound::GetInstance()->LoadFile("resources/Alarm01.wav");
-	Sound::GetInstance()->PlayWave(soundData_);
 	TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
+	TextureManager::GetInstance()->LoadTexture("resources/life.png");
 	TextureManager::GetInstance()->LoadTexture("monsterBall.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
-	camera_->SetRotate({ 0.3f, 0, 0 });
-	camera_->SetTranslate({ 0, 4, -10 });
+	// 最初はプレイヤーの顔を正面から映す。
+	camera_->SetRotate(kOpeningCameraRotation);
+	camera_->SetTranslate(kOpeningCameraPosition);
 	object3dCommon_->SetDefaultCamera(camera_.get());
+	camera_->Update();
+	// プレイヤーの残りHPを表示するスプライトを作る。
 	for (uint32_t i = 0; i < 3; ++i) {
 		auto sprite = std::make_unique<Sprite>();
-		sprite->Initialize(SpriteCommon::GetInstance(), "resources/uvChecker.png");
-		sprite->SetPosition({ 40.0f + 40.0f * i, 40.0f });
-		sprite->SetSize({ 28.0f, 28.0f });
-		sprite->SetColor({ 1.0f, 0.15f, 0.15f, 1.0f });
+		sprite->Initialize(SpriteCommon::GetInstance(), "resources/life.png");
+		sprite->SetPosition({ 35.0f + 50.0f * i, 50.0f });
+		sprite->SetSize({ 36.0f, 72.0f });
+		sprite->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
 		hpSprites_.push_back(std::move(sprite));
 	}
-	// モデルのロード
+	// プレイヤーとコース、障害物に必要なモデルを読み込む。
 	ModelManager::GetInstance()->LoadModel("human/Mannequin_Large.glb");
-	ModelManager::GetInstance()->LoadModel("plane.obj");
-	ModelManager::GetInstance()->LoadModel("AnimatedCube.gltf");
+	ModelManager::GetInstance()->LoadModel("road.obj");
+	ModelManager::GetInstance()->LoadModel("tyoutin.obj");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
+	// ゲーム内の各管理オブジェクトを生成する。
 	player_ = std::make_unique<Player>();
 	player_->Initialize(object3dCommon_, input_);
 	courseManager_ = std::make_unique<CourseManager>();
@@ -52,10 +79,17 @@ void GamePlayScene::Initialize() {
 	obstacleManager_ = std::make_unique<ObstacleManager>();
 	obstacleManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
+	// 演出中に描画できるよう、各3Dオブジェクトの行列だけ先に作る。
+	player_->Update();
+	courseManager_->Update(kGameplayCameraPosition.z);
+	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
+	openingCameraTime_ = 0.0f;
+	gameplayStarted_ = false;
 	InitializeSceneReveal();
 }
 
 void GamePlayScene::Finalize() {
+	// シーンで生成したオブジェクトと音声を解放する。
 	player_->Finalize();
 	courseManager_->Finalize();
 	obstacleManager_->Finalize();
@@ -64,11 +98,11 @@ void GamePlayScene::Finalize() {
 	revealLeftSprite_.reset();
 	revealRightSprite_.reset();
 	camera_.reset();
-	Sound::GetInstance()->Unload(&soundData_);
 }
 
 void GamePlayScene::Update() {
 #ifdef USE_IMGUI
+	// デバッグ中だけ各種パラメータを画面から調整する。
 	player_->DrawImGui();
 	courseManager_->DrawImGui();
 
@@ -79,11 +113,24 @@ void GamePlayScene::Update() {
 	if (ImGui::DragFloat3("Rotation", &cameraRotation.x, 0.01f)) { camera_->SetRotate(cameraRotation); }
 	ImGui::End();
 #endif
-	if (animatedModel_ && animation_.duration > 0) { animationTime_ = std::fmod(animationTime_ + 1.0f / 60.0f, animation_.duration); animatedModel_->UpdateSkeleton(animation_, animationTime_); }
+	// 走行アニメーションを繰り返し再生する。
+	if (animatedModel_ && animation_.duration > 0) { animationTime_ = std::fmod(animationTime_ + kDeltaTime, animation_.duration); animatedModel_->UpdateSkeleton(animation_, animationTime_); }
+
+	// カメラ演出が終わるまではコースと障害物を動かさない。
+	if (!gameplayStarted_) {
+		UpdateOpeningCamera();
+		camera_->Update();
+		for (const auto& sprite : hpSprites_) { sprite->Update(); }
+		UpdateSceneReveal();
+		return;
+	}
+
+	// カメラ・プレイヤー・コース・障害物を順番に更新する。
 	camera_->Update();
 	player_->Update();
 	courseManager_->Update(camera_->GetTranslate().z);
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
+	// 無敵中でなければ障害物との当たり判定を行う。
 	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
 		if (player_->IsDead()) {
@@ -91,11 +138,30 @@ void GamePlayScene::Update() {
 			return;
 		}
 	}
+	// HP表示とゲーム開始時の画面開放演出を更新する。
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
 	UpdateSceneReveal();
 }
 
+void GamePlayScene::UpdateOpeningCamera() {
+	openingCameraTime_ += kDeltaTime;
+
+	// 最初は顔を映し、その後に通常のゲームカメラへ滑らかに戻す。
+	const float moveTime = openingCameraTime_ - kOpeningHoldDuration;
+	const float t = std::clamp(moveTime / kOpeningMoveDuration, 0.0f, 1.0f);
+	const float eased = SmoothStep(t);
+	camera_->SetTranslate(LerpVector3(kOpeningCameraPosition, kGameplayCameraPosition, eased));
+	camera_->SetRotate(LerpVector3(kOpeningCameraRotation, kGameplayCameraRotation, eased));
+
+	if (t >= 1.0f) {
+		camera_->SetTranslate(kGameplayCameraPosition);
+		camera_->SetRotate(kGameplayCameraRotation);
+		gameplayStarted_ = true;
+	}
+}
+
 void GamePlayScene::InitializeSceneReveal() {
+	// 画面を左右半分ずつ覆う黒いスプライトを作る。
 	revealLeftSprite_ = std::make_unique<Sprite>();
 	revealLeftSprite_->Initialize(SpriteCommon::GetInstance(), "resources/human/white.png");
 	revealLeftSprite_->SetPosition({ 320.0f, 360.0f });
@@ -119,7 +185,7 @@ void GamePlayScene::UpdateSceneReveal() {
 		return;
 	}
 
-	constexpr float kDeltaTime = 1.0f / 60.0f;
+	// 黒いスプライトを中央から左右へ動かしてゲーム画面を見せる。
 	constexpr float kRevealDuration = 0.85f;
 	sceneRevealTime_ += kDeltaTime;
 	const float t = std::clamp(sceneRevealTime_ / kRevealDuration, 0.0f, 1.0f);
@@ -136,14 +202,19 @@ void GamePlayScene::UpdateSceneReveal() {
 }
 
 void GamePlayScene::Draw() {
+	// 3Dゲーム画面を描いた後にHPと遷移用スプライトを重ねる。
 	courseManager_->Draw();
-	obstacleManager_->Draw();
+	if (gameplayStarted_) {
+		obstacleManager_->Draw();
+	}
 	player_->Draw();
 
 	ID3D12GraphicsCommandList* commandList = Object3dCommon::GetInstance()->GetDxCommon()->GetCommandList();
 	SpriteCommon::GetInstance()->PreDraw(commandList);
-	for (int i = 0; i < player_->GetHp(); ++i) {
-		hpSprites_[i]->Draw(commandList);
+	if (gameplayStarted_) {
+		for (int i = 0; i < player_->GetHp(); ++i) {
+			hpSprites_[i]->Draw(commandList);
+		}
 	}
 	if (sceneRevealActive_) {
 		revealLeftSprite_->Draw(commandList);

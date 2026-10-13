@@ -2,7 +2,6 @@
 
 #include "BaseScene.h"
 #include "Animation.h"
-#include "Sound.h"
 #include <vector>
 #include <memory>
 
@@ -24,11 +23,11 @@ public:
 	void Draw() override;
 
 private:
+	void UpdateOpeningCamera();
 	void InitializeSceneReveal();
 	void UpdateSceneReveal();
 
 	Object3dCommon* object3dCommon_ = nullptr;
-	SoundData soundData_{};
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<Player> player_;
 	std::unique_ptr<CourseManager> courseManager_;
@@ -39,6 +38,8 @@ private:
 	std::unique_ptr<Sprite> revealRightSprite_;
 	Animation animation_{};
 	float animationTime_ = 0.0f;
+	float openingCameraTime_ = 0.0f;
 	float sceneRevealTime_ = 0.0f;
+	bool gameplayStarted_ = false;
 	bool sceneRevealActive_ = true;
 };

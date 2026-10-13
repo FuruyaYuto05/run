@@ -34,7 +34,8 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	// Mannequin_Largeは以前のモデルより約2.4倍大きいため縮小する。
 	object3d_->SetScale({ 0.4f, 0.4f, 0.4f });
 	object3d_->SetTranslate({ 0, 0, 0 });
-	object3d_->SetRotate({ 0, 3.14f, 0 });
+	// ゲームの進行方向へ正面を向ける。
+	object3d_->SetRotate({ 0.0f, 0.0f, 0.0f });
 }
 
 void Player::Finalize() {

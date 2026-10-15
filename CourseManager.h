@@ -13,7 +13,7 @@ public:
 
 	void Initialize(Object3dCommon* object3dCommon);
 	void Finalize();
-	void Update(float cameraZ);
+	void Update(float cameraZ, bool recycleSegments = true);
 	void UpdateTransformOnly();
 	void Draw();
 	void DrawImGui();

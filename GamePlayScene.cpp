@@ -105,7 +105,7 @@ void GamePlayScene::Initialize() {
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
 	// 演出中に描画できるよう、各3Dオブジェクトの行列だけ先に作る。
 	player_->Update();
-	courseManager_->Update(kGameplayCameraPosition.z);
+	courseManager_->UpdateTransformOnly();
 	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
 	openingCameraTime_ = 0.0f;
 	gameplayStarted_ = false;
@@ -146,8 +146,8 @@ void GamePlayScene::Update() {
 		camera_->Update();
 		// 自機は移動させず、移動中のカメラだけを描画へ反映する。
 		player_->UpdateTransformOnly();
-		// 演出中も走っているように見せるため、床は通常速度で流す。
-		courseManager_->Update(camera_->GetTranslate().z);
+		// 床は流すが、演出中は再配置を止めて画面内で消えるのを防ぐ。
+		courseManager_->Update(camera_->GetTranslate().z, false);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
 		UpdateSceneReveal();
 		return;

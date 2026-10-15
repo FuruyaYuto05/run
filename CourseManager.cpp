@@ -8,7 +8,9 @@
 // コースセグメントの数と長さを定義
 namespace {
 // コースセグメントの数
-constexpr int kCourseSegmentCount = 5;
+constexpr int kCourseSegmentCount = 8;
+// 追加した3枚はスタート位置より後方へ配置する
+constexpr int kRearCourseSegmentCount = 3;
 // コースセグメントの長さ
 constexpr float kCourseSegmentLength = 12.0f;
 // コースセグメントの半分の長さ
@@ -23,7 +25,8 @@ CourseManager::~CourseManager() = default;
 void CourseManager::Initialize(Object3dCommon* object3dCommon) {
 	courseSegments_.reserve(kCourseSegmentCount);
 	for (int i = 0; i < kCourseSegmentCount; ++i) {
-		const float z = kFirstCourseSegmentZ + kCourseSegmentLength * i;
+		const float z = kFirstCourseSegmentZ +
+			kCourseSegmentLength * (i - kRearCourseSegmentCount);
 		auto courseSegment = std::make_unique<CourseSegment>();
 		courseSegment->Initialize(object3dCommon, { 0.0f, 0.0f, z });
 		courseSegments_.push_back(std::move(courseSegment));
@@ -37,7 +40,7 @@ void CourseManager::Finalize() {
 	courseSegments_.clear();
 }
 
-void CourseManager::Update(float cameraZ) {
+void CourseManager::Update(float cameraZ, bool recycleSegments) {
 	// コースセグメントが存在しない場合は何もしない
 	if (courseSegments_.empty()) {
 		return;
@@ -48,19 +51,22 @@ void CourseManager::Update(float cameraZ) {
 		position.z -= moveSpeed_;
 		courseSegment->SetPosition(position);
 	}
-	// 最も奥にあるコースセグメントのZ座標を取得
-	float furthestZ = courseSegments_.front()->GetPosition().z;
-	for (const auto& courseSegment : courseSegments_) {
-		furthestZ = std::max(furthestZ, courseSegment->GetPosition().z);
-	}
-	// カメラのZ座標よりも奥にあるコースセグメントを前方に移動させる
-	for (const auto& courseSegment : courseSegments_) {
-		Math::Vector3 position = courseSegment->GetPosition();
-		if (position.z + kCourseSegmentHalfLength < cameraZ) {
-			furthestZ += kCourseSegmentLength;
-			position.z = furthestZ;
-			courseSegment->SetPosition(position);
+	if (recycleSegments) {
+		// 最も奥にある床の位置を基準に、通過した床を前方へ再配置する。
+		float furthestZ = courseSegments_.front()->GetPosition().z;
+		for (const auto& courseSegment : courseSegments_) {
+			furthestZ = std::max(furthestZ, courseSegment->GetPosition().z);
 		}
+		for (const auto& courseSegment : courseSegments_) {
+			Math::Vector3 position = courseSegment->GetPosition();
+			if (position.z + kCourseSegmentHalfLength < cameraZ) {
+				furthestZ += kCourseSegmentLength;
+				position.z = furthestZ;
+				courseSegment->SetPosition(position);
+			}
+		}
+	}
+	for (const auto& courseSegment : courseSegments_) {
 		courseSegment->Update();
 	}
 }

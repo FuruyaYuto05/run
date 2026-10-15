@@ -15,6 +15,7 @@ public:
 	void Initialize(Object3dCommon* object3dCommon, Input* input);
 	void Finalize();
 	void Update();
+	void UpdateTransformOnly();
 	void Draw();
 	void DrawImGui();
 	void OnCollision();

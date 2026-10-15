@@ -25,8 +25,8 @@ constexpr float kOpeningMoveDuration = 2.80f;
 constexpr float kPi = 3.1415927f;
 constexpr Math::Vector3 kOpeningCameraPosition = { 0.0f, 2.4f, 5.5f };
 constexpr Math::Vector3 kOpeningCameraRotation = { 0.266f, kPi, 0.0f };
-constexpr Math::Vector3 kOpeningSideCameraPosition = { 4.5f, 3.2f, -1.5f };
-constexpr Math::Vector3 kOpeningSideCameraRotation = { 0.45f, kPi * 1.5f, 0.0f };
+constexpr Math::Vector3 kOpeningControlPoint1 = { 4.0f, 2.7f, 3.0f };
+constexpr Math::Vector3 kOpeningControlPoint2 = { 5.0f, 3.8f, -5.5f };
 constexpr Math::Vector3 kGameplayCameraPosition = { 0.0f, 4.0f, -10.0f };
 constexpr Math::Vector3 kGameplayCameraRotation = { 0.3f, 0.0f, 0.0f };
 constexpr Math::Vector3 kGameplayCameraRotationForOpening = { 0.3f, kPi * 2.0f, 0.0f };
@@ -40,6 +40,24 @@ Math::Vector3 LerpVector3(const Math::Vector3& start, const Math::Vector3& end, 
 		start.x + (end.x - start.x) * t,
 		start.y + (end.y - start.y) * t,
 		start.z + (end.z - start.z) * t,
+	};
+}
+
+Math::Vector3 CubicBezierVector3(
+	const Math::Vector3& start,
+	const Math::Vector3& control1,
+	const Math::Vector3& control2,
+	const Math::Vector3& end,
+	float t) {
+	const float oneMinusT = 1.0f - t;
+	const float startWeight = oneMinusT * oneMinusT * oneMinusT;
+	const float control1Weight = 3.0f * oneMinusT * oneMinusT * t;
+	const float control2Weight = 3.0f * oneMinusT * t * t;
+	const float endWeight = t * t * t;
+	return {
+		start.x * startWeight + control1.x * control1Weight + control2.x * control2Weight + end.x * endWeight,
+		start.y * startWeight + control1.y * control1Weight + control2.y * control2Weight + end.y * endWeight,
+		start.z * startWeight + control1.z * control1Weight + control2.z * control2Weight + end.z * endWeight,
 	};
 }
 
@@ -126,7 +144,9 @@ void GamePlayScene::Update() {
 	if (!gameplayStarted_) {
 		UpdateOpeningCamera();
 		camera_->Update();
-		// 操作開始前でも走っているように見せるため、床だけは流し続ける。
+		// 自機は移動させず、移動中のカメラだけを描画へ反映する。
+		player_->UpdateTransformOnly();
+		// 演出中も走っているように見せるため、床は通常速度で流す。
 		courseManager_->Update(camera_->GetTranslate().z);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
 		UpdateSceneReveal();
@@ -154,20 +174,20 @@ void GamePlayScene::Update() {
 void GamePlayScene::UpdateOpeningCamera() {
 	openingCameraTime_ += kDeltaTime;
 
-	// 正面から右横を経由し、後方の通常カメラまで途切れずに移動する。
+	// 正面から右側を回り、後方まで1本の曲線で止まらずに移動する。
 	const float moveTime = openingCameraTime_ - kOpeningHoldDuration;
 	const float t = std::clamp(moveTime / kOpeningMoveDuration, 0.0f, 1.0f);
-	Math::Vector3 cameraPosition = kOpeningCameraPosition;
-	Math::Vector3 cameraRotation = kOpeningCameraRotation;
-	if (t > 0.0f && t < 0.5f) {
-		const float firstHalfT = SmoothStep(t * 2.0f);
-		cameraPosition = LerpVector3(kOpeningCameraPosition, kOpeningSideCameraPosition, firstHalfT);
-		cameraRotation = LerpVector3(kOpeningCameraRotation, kOpeningSideCameraRotation, firstHalfT);
-	} else if (t >= 0.5f) {
-		const float secondHalfT = SmoothStep((t - 0.5f) * 2.0f);
-		cameraPosition = LerpVector3(kOpeningSideCameraPosition, kGameplayCameraPosition, secondHalfT);
-		cameraRotation = LerpVector3(kOpeningSideCameraRotation, kGameplayCameraRotationForOpening, secondHalfT);
-	}
+	const float eased = SmoothStep(t);
+	const Math::Vector3 cameraPosition = CubicBezierVector3(
+		kOpeningCameraPosition,
+		kOpeningControlPoint1,
+		kOpeningControlPoint2,
+		kGameplayCameraPosition,
+		eased);
+	const Math::Vector3 cameraRotation = LerpVector3(
+		kOpeningCameraRotation,
+		kGameplayCameraRotationForOpening,
+		eased);
 	camera_->SetTranslate(cameraPosition);
 	camera_->SetRotate(cameraRotation);
 

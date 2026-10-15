@@ -14,6 +14,7 @@ public:
 	void Initialize(Object3dCommon* object3dCommon);
 	void Finalize();
 	void Update(float cameraZ);
+	void UpdateTransformOnly();
 	void Draw();
 	void DrawImGui();
 	float GetMoveSpeed() const { return moveSpeed_; }

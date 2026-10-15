@@ -89,6 +89,11 @@ void Player::Update() {
 	object3d_->Update();
 }
 
+void Player::UpdateTransformOnly() {
+	// 入力や位置は変更せず、現在のカメラを描画行列へ反映する。
+	object3d_->Update();
+}
+
 void Player::Draw() {
 	if (isVisible_) {
 		object3d_->Draw();

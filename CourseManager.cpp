@@ -65,6 +65,13 @@ void CourseManager::Update(float cameraZ) {
 	}
 }
 
+void CourseManager::UpdateTransformOnly() {
+	// 床を移動させず、現在のカメラを各セグメントの描画行列へ反映する。
+	for (const auto& courseSegment : courseSegments_) {
+		courseSegment->Update();
+	}
+}
+
 void CourseManager::Draw() {
 	// コースセグメントを描画
 	for (const auto& courseSegment : courseSegments_) {

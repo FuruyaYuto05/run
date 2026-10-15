@@ -20,13 +20,16 @@
 
 namespace {
 constexpr float kDeltaTime = 1.0f / 60.0f;
-constexpr float kOpeningHoldDuration = 0.95f;
-constexpr float kOpeningMoveDuration = 1.50f;
+constexpr float kOpeningHoldDuration = 0.85f;
+constexpr float kOpeningMoveDuration = 2.80f;
 constexpr float kPi = 3.1415927f;
-constexpr Math::Vector3 kOpeningCameraPosition = { 0.0f, 2.4f, 3.5f };
-constexpr Math::Vector3 kOpeningCameraRotation = { 0.0f, kPi, 0.0f };
+constexpr Math::Vector3 kOpeningCameraPosition = { 0.0f, 2.4f, 5.5f };
+constexpr Math::Vector3 kOpeningCameraRotation = { 0.266f, kPi, 0.0f };
+constexpr Math::Vector3 kOpeningSideCameraPosition = { 4.5f, 3.2f, -1.5f };
+constexpr Math::Vector3 kOpeningSideCameraRotation = { 0.45f, kPi * 1.5f, 0.0f };
 constexpr Math::Vector3 kGameplayCameraPosition = { 0.0f, 4.0f, -10.0f };
 constexpr Math::Vector3 kGameplayCameraRotation = { 0.3f, 0.0f, 0.0f };
+constexpr Math::Vector3 kGameplayCameraRotationForOpening = { 0.3f, kPi * 2.0f, 0.0f };
 
 float SmoothStep(float t) {
 	return t * t * (3.0f - 2.0f * t);
@@ -39,6 +42,7 @@ Math::Vector3 LerpVector3(const Math::Vector3& start, const Math::Vector3& end, 
 		start.z + (end.z - start.z) * t,
 	};
 }
+
 }
 
 GamePlayScene::GamePlayScene() = default;
@@ -122,6 +126,8 @@ void GamePlayScene::Update() {
 	if (!gameplayStarted_) {
 		UpdateOpeningCamera();
 		camera_->Update();
+		// 操作開始前でも走っているように見せるため、床だけは流し続ける。
+		courseManager_->Update(camera_->GetTranslate().z);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
 		UpdateSceneReveal();
 		return;
@@ -148,12 +154,22 @@ void GamePlayScene::Update() {
 void GamePlayScene::UpdateOpeningCamera() {
 	openingCameraTime_ += kDeltaTime;
 
-	// 最初は顔を映し、その後に通常のゲームカメラへ滑らかに戻す。
+	// 正面から右横を経由し、後方の通常カメラまで途切れずに移動する。
 	const float moveTime = openingCameraTime_ - kOpeningHoldDuration;
 	const float t = std::clamp(moveTime / kOpeningMoveDuration, 0.0f, 1.0f);
-	const float eased = SmoothStep(t);
-	camera_->SetTranslate(LerpVector3(kOpeningCameraPosition, kGameplayCameraPosition, eased));
-	camera_->SetRotate(LerpVector3(kOpeningCameraRotation, kGameplayCameraRotation, eased));
+	Math::Vector3 cameraPosition = kOpeningCameraPosition;
+	Math::Vector3 cameraRotation = kOpeningCameraRotation;
+	if (t > 0.0f && t < 0.5f) {
+		const float firstHalfT = SmoothStep(t * 2.0f);
+		cameraPosition = LerpVector3(kOpeningCameraPosition, kOpeningSideCameraPosition, firstHalfT);
+		cameraRotation = LerpVector3(kOpeningCameraRotation, kOpeningSideCameraRotation, firstHalfT);
+	} else if (t >= 0.5f) {
+		const float secondHalfT = SmoothStep((t - 0.5f) * 2.0f);
+		cameraPosition = LerpVector3(kOpeningSideCameraPosition, kGameplayCameraPosition, secondHalfT);
+		cameraRotation = LerpVector3(kOpeningSideCameraRotation, kGameplayCameraRotationForOpening, secondHalfT);
+	}
+	camera_->SetTranslate(cameraPosition);
+	camera_->SetRotate(cameraRotation);
 
 	if (t >= 1.0f) {
 		camera_->SetTranslate(kGameplayCameraPosition);

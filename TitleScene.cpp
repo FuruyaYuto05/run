@@ -92,8 +92,8 @@ void TitleScene::Initialize() {
 
 	// タイトル画面で使用する画像を読み込む。
 	TextureManager::GetInstance()->LoadTexture("resources/title/title.png");
-	TextureManager::GetInstance()->LoadTexture("resources/title/PLAY.png");
-	TextureManager::GetInstance()->LoadTexture("resources/title/EXIT.png");
+	TextureManager::GetInstance()->LoadTexture("resources/title/start.png");
+	TextureManager::GetInstance()->LoadTexture("resources/title/end.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handR.png");
@@ -106,16 +106,16 @@ void TitleScene::Initialize() {
 	titleSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/title.png");
 
 	playSprite_ = std::make_unique<Sprite>();
-	playSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/PLAY.png");
+	playSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/start.png");
 
 	exitSprite_ = std::make_unique<Sprite>();
-	exitSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/EXIT.png");
+	exitSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/end.png");
 
 	playGlowSprite_ = std::make_unique<Sprite>();
-	playGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/PLAY.png");
+	playGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/start.png");
 
 	exitGlowSprite_ = std::make_unique<Sprite>();
-	exitGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/EXIT.png");
+	exitGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/end.png");
 
 	// 完全不透明な白画像を黒く着色し、画面全体の暗転に使用する。
 	fadeSprite_ = std::make_unique<Sprite>();
@@ -300,7 +300,7 @@ void TitleScene::Update() {
 	ImGui::Begin("Title Scene");
 	ImGui::Text("Press Enter to Start");
 	ImGui::Text("Animation Time: %.2f", totalTime_);
-	ImGui::Text("Selected: %s", selectedMenu_ == MenuItem::Play ? "PLAY" : "EXIT");
+	ImGui::Text("Selected: %s", selectedMenu_ == MenuItem::Play ? "START" : "END");
 	ImGui::Text("Menu Input: %s", menuReady_ ? "Ready" : "Waiting for slide-in");
 	ImGui::Text("Auto Restart: %.1f / %.1f", inactivityTime_, kRestartWaitDuration);
 	ImGui::End();
@@ -436,7 +436,7 @@ float TitleScene::NextHandRandom01() {
 }
 
 void TitleScene::ApplyMenuTransform() {
-	// PLAYとEXITを左右から滑らせ、選択中の項目を発光させる。
+	// STARTとENDを左右から滑らせ、選択中の項目を発光させる。
 	const float playT = std::clamp((totalTime_ - kPlaySlideDelay) / kMenuSlideDuration, 0.0f, 1.0f);
 	const float exitT = std::clamp((totalTime_ - kExitSlideDelay) / kMenuSlideDuration, 0.0f, 1.0f);
 	const float playX = kPlaySlideStartX + (kMenuX - kPlaySlideStartX) * EaseOutBack(playT);

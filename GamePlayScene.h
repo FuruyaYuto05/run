@@ -37,6 +37,7 @@ private:
 	Model* animatedModel_ = nullptr;
 	std::vector<std::unique_ptr<Sprite>> hpSprites_;
 	std::vector<std::unique_ptr<Sprite>> startRunSprites_;
+	std::vector<size_t> startRunAppearRanks_;
 	std::unique_ptr<Sprite> revealLeftSprite_;
 	std::unique_ptr<Sprite> revealRightSprite_;
 	Animation animation_{};

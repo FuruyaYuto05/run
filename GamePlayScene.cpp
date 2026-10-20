@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <numeric>
+#include <random>
 
 #ifdef USE_IMGUI
 #include <imgui.h>
@@ -56,6 +58,7 @@ constexpr float kStartRunFirstAppearTime = 0.65f;
 constexpr float kStartRunAppearInterval = 0.25f;
 constexpr float kStartRunPopDuration = 0.12f;
 constexpr float kStartRunFadeDuration = 0.60f;
+constexpr float kStartRunSizeScale = 1.65f;
 
 float SmoothStep(float t) {
 	return t * t * (3.0f - 2.0f * t);
@@ -148,6 +151,7 @@ void GamePlayScene::Finalize() {
 	player_.reset(); courseManager_.reset(); obstacleManager_.reset();
 	hpSprites_.clear();
 	startRunSprites_.clear();
+	startRunAppearRanks_.clear();
 	revealLeftSprite_.reset();
 	revealRightSprite_.reset();
 	camera_.reset();
@@ -232,6 +236,16 @@ void GamePlayScene::UpdateOpeningCamera() {
 void GamePlayScene::InitializeStartRunEffect() {
 	startRunSprites_.clear();
 	startRunSprites_.reserve(kStartRunLayouts.size());
+	startRunAppearRanks_.assign(kStartRunLayouts.size(), 0);
+
+	// 同じ配置でも、出現する順番はゲーム開始ごとに変える。
+	std::vector<size_t> appearOrder(kStartRunLayouts.size());
+	std::iota(appearOrder.begin(), appearOrder.end(), size_t{0});
+	static std::mt19937 randomEngine(std::random_device{}());
+	std::shuffle(appearOrder.begin(), appearOrder.end(), randomEngine);
+	for (size_t rank = 0; rank < appearOrder.size(); ++rank) {
+		startRunAppearRanks_[appearOrder[rank]] = rank;
+	}
 
 	for (const StartRunLayout& layout : kStartRunLayouts) {
 		auto sprite = std::make_unique<Sprite>();
@@ -264,7 +278,7 @@ void GamePlayScene::UpdateStartRunEffect() {
 	for (size_t i = 0; i < startRunSprites_.size(); ++i) {
 		const StartRunLayout& layout = kStartRunLayouts[i];
 		const float appearTime = kStartRunFirstAppearTime +
-			kStartRunAppearInterval * static_cast<float>(i);
+			kStartRunAppearInterval * static_cast<float>(startRunAppearRanks_[i]);
 		const float age = openingCameraTime_ - appearTime;
 		const float popT = std::clamp(age / kStartRunPopDuration, 0.0f, 1.0f);
 		const float appearAlpha = age >= 0.0f ? SmoothStep(popT) : 0.0f;
@@ -282,8 +296,8 @@ void GamePlayScene::UpdateStartRunEffect() {
 			layout.position.y + shakeY,
 		});
 		sprite->SetSize({
-			layout.size.x * popScale,
-			layout.size.y * popScale,
+			layout.size.x * popScale * kStartRunSizeScale,
+			layout.size.y * popScale * kStartRunSizeScale,
 		});
 		sprite->SetRotation({
 			0.0f,

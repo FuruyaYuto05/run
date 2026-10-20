@@ -10,6 +10,7 @@
 #include "CourseManager.h"
 #include "ObstacleManager.h"
 #include "GameOverScene.h"
+#include "TitleScene.h"
 #include "SceneManager.h"
 #include <algorithm>
 #include <array>
@@ -25,6 +26,8 @@ namespace {
 constexpr float kDeltaTime = 1.0f / 60.0f;
 constexpr float kOpeningHoldDuration = 0.85f;
 constexpr float kOpeningMoveDuration = 2.80f;
+constexpr float kReturnToTitleWaitDuration = 1.00f;
+constexpr float kReturnToTitleFadeDuration = 0.60f;
 constexpr float kPi = 3.1415927f;
 constexpr Math::Vector3 kOpeningCameraPosition = { 0.0f, 2.4f, 5.5f };
 constexpr Math::Vector3 kOpeningCameraRotation = { 0.266f, kPi, 0.0f };
@@ -138,9 +141,18 @@ void GamePlayScene::Initialize() {
 	courseManager_->UpdateTransformOnly();
 	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
 	openingCameraTime_ = 0.0f;
+	returnToTitleTime_ = 0.0f;
 	gameplayStarted_ = false;
 	InitializeStartRunEffect();
 	InitializeSceneReveal();
+
+	// スタート演出後にタイトルへ戻るための黒フェード。
+	returnFadeSprite_ = std::make_unique<Sprite>();
+	returnFadeSprite_->Initialize(SpriteCommon::GetInstance(), "resources/human/white.png");
+	returnFadeSprite_->SetPosition({ 640.0f, 360.0f });
+	returnFadeSprite_->SetSize({ 1280.0f, 720.0f });
+	returnFadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
+	returnFadeSprite_->Update();
 }
 
 void GamePlayScene::Finalize() {
@@ -154,6 +166,7 @@ void GamePlayScene::Finalize() {
 	startRunAppearRanks_.clear();
 	revealLeftSprite_.reset();
 	revealRightSprite_.reset();
+	returnFadeSprite_.reset();
 	camera_.reset();
 }
 
@@ -204,6 +217,20 @@ void GamePlayScene::Update() {
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
 	UpdateStartRunEffect();
 	UpdateSceneReveal();
+
+	// 後方カメラ到着後は少し走り、黒く暗転してからタイトルへ戻る。
+	returnToTitleTime_ += kDeltaTime;
+	const float returnFadeAlpha = std::clamp(
+		(returnToTitleTime_ - kReturnToTitleWaitDuration) /
+		kReturnToTitleFadeDuration,
+		0.0f,
+		1.0f);
+	returnFadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, returnFadeAlpha });
+	returnFadeSprite_->Update();
+	if (returnFadeAlpha >= 1.0f) {
+		sceneManager_->SetNextScene(std::make_unique<TitleScene>());
+		return;
+	}
 }
 
 void GamePlayScene::UpdateOpeningCamera() {
@@ -378,4 +405,5 @@ void GamePlayScene::Draw() {
 		revealLeftSprite_->Draw(commandList);
 		revealRightSprite_->Draw(commandList);
 	}
+	returnFadeSprite_->Draw(commandList);
 }

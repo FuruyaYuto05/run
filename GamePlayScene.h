@@ -40,9 +40,11 @@ private:
 	std::vector<size_t> startRunAppearRanks_;
 	std::unique_ptr<Sprite> revealLeftSprite_;
 	std::unique_ptr<Sprite> revealRightSprite_;
+	std::unique_ptr<Sprite> returnFadeSprite_;
 	Animation animation_{};
 	float animationTime_ = 0.0f;
 	float openingCameraTime_ = 0.0f;
+	float returnToTitleTime_ = 0.0f;
 	float startRunFadeTime_ = 0.0f;
 	float sceneRevealTime_ = 0.0f;
 	bool gameplayStarted_ = false;

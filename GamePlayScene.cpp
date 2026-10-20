@@ -12,6 +12,7 @@
 #include "GameOverScene.h"
 #include "SceneManager.h"
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #ifdef USE_IMGUI
@@ -30,6 +31,31 @@ constexpr Math::Vector3 kOpeningControlPoint2 = { 5.0f, 3.8f, -5.5f };
 constexpr Math::Vector3 kGameplayCameraPosition = { 0.0f, 4.0f, -10.0f };
 constexpr Math::Vector3 kGameplayCameraRotation = { 0.3f, 0.0f, 0.0f };
 constexpr Math::Vector3 kGameplayCameraRotationForOpening = { 0.3f, kPi * 2.0f, 0.0f };
+
+struct StartRunLayout {
+	Math::Vector2 position;
+	Math::Vector2 size;
+	float rotation;
+};
+
+// 自機が映る画面中央を避け、周囲を囲むように配置する。
+constexpr std::array<StartRunLayout, 10> kStartRunLayouts = {{
+	{{ 170.0f, 95.0f }, { 245.0f, 46.0f }, -0.08f},
+	{{1080.0f, 105.0f }, { 225.0f, 42.0f },  0.06f},
+	{{ 165.0f, 225.0f }, { 215.0f, 40.0f },  0.04f},
+	{{1110.0f, 240.0f }, { 250.0f, 47.0f }, -0.07f},
+	{{ 145.0f, 365.0f }, { 235.0f, 44.0f }, -0.03f},
+	{{1135.0f, 390.0f }, { 220.0f, 41.0f },  0.08f},
+	{{ 185.0f, 515.0f }, { 260.0f, 49.0f },  0.07f},
+	{{1090.0f, 535.0f }, { 245.0f, 46.0f }, -0.05f},
+	{{ 355.0f, 655.0f }, { 230.0f, 43.0f }, -0.06f},
+	{{ 920.0f, 650.0f }, { 270.0f, 51.0f },  0.05f},
+}};
+
+constexpr float kStartRunFirstAppearTime = 0.65f;
+constexpr float kStartRunAppearInterval = 0.25f;
+constexpr float kStartRunPopDuration = 0.12f;
+constexpr float kStartRunFadeDuration = 0.60f;
 
 float SmoothStep(float t) {
 	return t * t * (3.0f - 2.0f * t);
@@ -73,6 +99,7 @@ void GamePlayScene::Initialize() {
 	object3dCommon_->GetDxCommon()->SetClearColor(0.015f, 0.02f, 0.04f, 1.0f);
 	TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 	TextureManager::GetInstance()->LoadTexture("resources/life.png");
+	TextureManager::GetInstance()->LoadTexture("resources/startRun.png");
 	TextureManager::GetInstance()->LoadTexture("monsterBall.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
@@ -109,6 +136,7 @@ void GamePlayScene::Initialize() {
 	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
 	openingCameraTime_ = 0.0f;
 	gameplayStarted_ = false;
+	InitializeStartRunEffect();
 	InitializeSceneReveal();
 }
 
@@ -119,6 +147,7 @@ void GamePlayScene::Finalize() {
 	obstacleManager_->Finalize();
 	player_.reset(); courseManager_.reset(); obstacleManager_.reset();
 	hpSprites_.clear();
+	startRunSprites_.clear();
 	revealLeftSprite_.reset();
 	revealRightSprite_.reset();
 	camera_.reset();
@@ -143,6 +172,7 @@ void GamePlayScene::Update() {
 	// カメラ演出が終わるまではコースと障害物を動かさない。
 	if (!gameplayStarted_) {
 		UpdateOpeningCamera();
+		UpdateStartRunEffect();
 		camera_->Update();
 		// 自機は移動させず、移動中のカメラだけを描画へ反映する。
 		player_->UpdateTransformOnly();
@@ -168,6 +198,7 @@ void GamePlayScene::Update() {
 	}
 	// HP表示とゲーム開始時の画面開放演出を更新する。
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
+	UpdateStartRunEffect();
 	UpdateSceneReveal();
 }
 
@@ -195,6 +226,76 @@ void GamePlayScene::UpdateOpeningCamera() {
 		camera_->SetTranslate(kGameplayCameraPosition);
 		camera_->SetRotate(kGameplayCameraRotation);
 		gameplayStarted_ = true;
+	}
+}
+
+void GamePlayScene::InitializeStartRunEffect() {
+	startRunSprites_.clear();
+	startRunSprites_.reserve(kStartRunLayouts.size());
+
+	for (const StartRunLayout& layout : kStartRunLayouts) {
+		auto sprite = std::make_unique<Sprite>();
+		sprite->Initialize(SpriteCommon::GetInstance(), "resources/startRun.png");
+		sprite->SetPosition(layout.position);
+		sprite->SetSize(layout.size);
+		sprite->SetRotation({ 0.0f, 0.0f, layout.rotation });
+		sprite->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+		sprite->Update();
+		startRunSprites_.push_back(std::move(sprite));
+	}
+
+	startRunFadeTime_ = 0.0f;
+	startRunEffectActive_ = true;
+}
+
+void GamePlayScene::UpdateStartRunEffect() {
+	if (!startRunEffectActive_) {
+		return;
+	}
+
+	float fadeAlpha = 1.0f;
+	if (gameplayStarted_) {
+		startRunFadeTime_ += kDeltaTime;
+		fadeAlpha = 1.0f - std::clamp(
+			startRunFadeTime_ / kStartRunFadeDuration, 0.0f, 1.0f);
+	}
+
+	const float effectTime = openingCameraTime_ + startRunFadeTime_;
+	for (size_t i = 0; i < startRunSprites_.size(); ++i) {
+		const StartRunLayout& layout = kStartRunLayouts[i];
+		const float appearTime = kStartRunFirstAppearTime +
+			kStartRunAppearInterval * static_cast<float>(i);
+		const float age = openingCameraTime_ - appearTime;
+		const float popT = std::clamp(age / kStartRunPopDuration, 0.0f, 1.0f);
+		const float appearAlpha = age >= 0.0f ? SmoothStep(popT) : 0.0f;
+		const float pulse = 1.0f + 0.025f *
+			std::sin(effectTime * 8.0f + static_cast<float>(i) * 1.7f);
+		const float popScale = (0.80f + 0.20f * SmoothStep(popT)) * pulse;
+		const float shakeX = 2.0f *
+			std::sin(effectTime * 11.0f + static_cast<float>(i));
+		const float shakeY = 1.5f *
+			std::cos(effectTime * 9.0f + static_cast<float>(i) * 1.3f);
+
+		Sprite* sprite = startRunSprites_[i].get();
+		sprite->SetPosition({
+			layout.position.x + shakeX,
+			layout.position.y + shakeY,
+		});
+		sprite->SetSize({
+			layout.size.x * popScale,
+			layout.size.y * popScale,
+		});
+		sprite->SetRotation({
+			0.0f,
+			0.0f,
+			layout.rotation + 0.012f * std::sin(effectTime * 7.0f + static_cast<float>(i)),
+		});
+		sprite->SetColor({ 1.0f, 1.0f, 1.0f, appearAlpha * fadeAlpha });
+		sprite->Update();
+	}
+
+	if (gameplayStarted_ && fadeAlpha <= 0.0f) {
+		startRunEffectActive_ = false;
 	}
 }
 
@@ -252,6 +353,11 @@ void GamePlayScene::Draw() {
 	if (gameplayStarted_) {
 		for (int i = 0; i < player_->GetHp(); ++i) {
 			hpSprites_[i]->Draw(commandList);
+		}
+	}
+	if (startRunEffectActive_) {
+		for (const auto& sprite : startRunSprites_) {
+			sprite->Draw(commandList);
 		}
 	}
 	if (sceneRevealActive_) {

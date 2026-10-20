@@ -24,6 +24,8 @@ public:
 
 private:
 	void UpdateOpeningCamera();
+	void InitializeStartRunEffect();
+	void UpdateStartRunEffect();
 	void InitializeSceneReveal();
 	void UpdateSceneReveal();
 
@@ -34,12 +36,15 @@ private:
 	std::unique_ptr<ObstacleManager> obstacleManager_;
 	Model* animatedModel_ = nullptr;
 	std::vector<std::unique_ptr<Sprite>> hpSprites_;
+	std::vector<std::unique_ptr<Sprite>> startRunSprites_;
 	std::unique_ptr<Sprite> revealLeftSprite_;
 	std::unique_ptr<Sprite> revealRightSprite_;
 	Animation animation_{};
 	float animationTime_ = 0.0f;
 	float openingCameraTime_ = 0.0f;
+	float startRunFadeTime_ = 0.0f;
 	float sceneRevealTime_ = 0.0f;
 	bool gameplayStarted_ = false;
+	bool startRunEffectActive_ = true;
 	bool sceneRevealActive_ = true;
 };

@@ -17,6 +17,7 @@ constexpr float kCourseSegmentLength = 12.0f;
 constexpr float kCourseSegmentHalfLength = kCourseSegmentLength * 0.5f;
 // 最初のコースセグメントのZ座標
 constexpr float kFirstCourseSegmentZ = 5.0f;
+constexpr float kDeltaTime = 1.0f / 60.0f;
 }
 
 CourseManager::CourseManager() = default;
@@ -31,6 +32,8 @@ void CourseManager::Initialize(Object3dCommon* object3dCommon) {
 		courseSegment->Initialize(object3dCommon, { 0.0f, 0.0f, z });
 		courseSegments_.push_back(std::move(courseSegment));
 	}
+	comparisonElapsedTime_ = 0.0f;
+	totalRecycleCount_ = 0;
 }
 
 void CourseManager::Finalize() {
@@ -52,6 +55,7 @@ void CourseManager::Update(float cameraZ, bool recycleSegments) {
 		courseSegment->SetPosition(position);
 	}
 	if (recycleSegments) {
+		comparisonElapsedTime_ += kDeltaTime;
 		// 最も奥にある床の位置を基準に、通過した床を前方へ再配置する。
 		float furthestZ = courseSegments_.front()->GetPosition().z;
 		for (const auto& courseSegment : courseSegments_) {
@@ -63,6 +67,7 @@ void CourseManager::Update(float cameraZ, bool recycleSegments) {
 				furthestZ += kCourseSegmentLength;
 				position.z = furthestZ;
 				courseSegment->SetPosition(position);
+				++totalRecycleCount_;
 			}
 		}
 	}
@@ -92,6 +97,22 @@ void CourseManager::DrawImGui() {
 	if (moveSpeed_ < 0.0f) {
 		moveSpeed_ = 0.0f;
 	}
+
+	const ImGuiIO& io = ImGui::GetIO();
+	const float frameTimeMs = io.Framerate > 0.0f ? 1000.0f / io.Framerate : 0.0f;
+
+	ImGui::Separator();
+	ImGui::TextColored(
+		{ 0.25f, 1.0f, 0.45f, 1.0f },
+		"Mode: Floor Reuse");
+	ImGui::Text("Elapsed Time: %.1f sec", comparisonElapsedTime_);
+	ImGui::Text("Initial Segments: %d", kCourseSegmentCount);
+	ImGui::Text("Current Segments: %zu", courseSegments_.size());
+	ImGui::Text("Newly Generated: 0");
+	ImGui::Text("Reuse Count: %zu", totalRecycleCount_);
+	ImGui::Text("Drawn Floor Objects: %zu", courseSegments_.size());
+	ImGui::Text("FPS: %.1f", io.Framerate);
+	ImGui::Text("Frame Time: %.3f ms", frameTimeMs);
 	ImGui::End();
 #endif
 }

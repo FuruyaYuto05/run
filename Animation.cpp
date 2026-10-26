@@ -5,7 +5,10 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-Animation LoadAnimationFile(const std::string& directoryPath, const std::string& filename)
+Animation LoadAnimationFile(
+	const std::string& directoryPath,
+	const std::string& filename,
+	const std::string& animationName)
 {
 	Animation animation{};
 
@@ -18,6 +21,24 @@ Animation LoadAnimationFile(const std::string& directoryPath, const std::string&
 	assert(scene->mNumAnimations != 0);
 
 	aiAnimation* animationAssimp = scene->mAnimations[0];
+	if (!animationName.empty()) {
+		animationAssimp = nullptr;
+		for (uint32_t animationIndex = 0; animationIndex < scene->mNumAnimations; ++animationIndex) {
+			aiAnimation* candidate = scene->mAnimations[animationIndex];
+			const std::string candidateName = candidate->mName.C_Str();
+			// FBXでは「Armature|Fast_Flying」のような名前になる場合もある。
+			if (candidateName == animationName ||
+				(candidateName.size() > animationName.size() &&
+				 candidateName.ends_with("|" + animationName))) {
+				animationAssimp = candidate;
+				break;
+			}
+		}
+		assert(animationAssimp && "Requested animation was not found");
+		if (!animationAssimp) {
+			return animation;
+		}
+	}
 
 	animation.duration = float(animationAssimp->mDuration / animationAssimp->mTicksPerSecond);
 

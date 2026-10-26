@@ -8,6 +8,7 @@
 
 class Camera;
 class Object3dCommon;
+class Object3d;
 class Model;
 class Sprite;
 class Player;
@@ -40,6 +41,7 @@ private:
 	};
 
 	void UpdateOpeningCamera();
+	void UpdateGhost();
 	void InitializeStartRunEffect();
 	void UpdateStartRunEffect();
 	void InitializeSceneReveal();
@@ -53,9 +55,11 @@ private:
 	Object3dCommon* object3dCommon_ = nullptr;
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<Player> player_;
+	std::unique_ptr<Object3d> ghostObject_;
 	std::unique_ptr<CourseManager> courseManager_;
 	std::unique_ptr<ObstacleManager> obstacleManager_;
 	Model* animatedModel_ = nullptr;
+	Model* ghostModel_ = nullptr;
 	std::vector<std::unique_ptr<Sprite>> hpSprites_;
 	std::vector<std::unique_ptr<Sprite>> startRunSprites_;
 	std::vector<size_t> startRunAppearRanks_;
@@ -66,8 +70,10 @@ private:
 	std::vector<DeathHandStamp> deathHandStamps_;
 	Animation animation_{};
 	Animation deathAnimation_{};
+	Animation ghostAnimation_{};
 	float animationTime_ = 0.0f;
 	float deathAnimationTime_ = 0.0f;
+	float ghostAnimationTime_ = 0.0f;
 	float openingCameraTime_ = 0.0f;
 	float startRunFadeTime_ = 0.0f;
 	float sceneRevealTime_ = 0.0f;

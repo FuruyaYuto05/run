@@ -69,7 +69,7 @@ void TitleRunner::ResetRun() {
 	if (!object3d_) {
 		return;
 	}
-
+	
 	// ImGuiで調整した高さと奥行きは残し、横位置だけ開始地点へ戻す。
 	Math::Vector3 position = object3d_->GetTranslate();
 	position.x = startX_;

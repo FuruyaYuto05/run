@@ -1,5 +1,6 @@
 #include "GamePlayScene.h"
 #include "Camera.h"
+#include "Object3d.h"
 #include "Object3dCommon.h"
 #include "Model.h"
 #include "ModelManager.h"
@@ -33,6 +34,9 @@ constexpr Math::Vector3 kOpeningControlPoint2 = { 5.0f, 3.8f, -5.5f };
 constexpr Math::Vector3 kGameplayCameraPosition = { 0.0f, 4.0f, -10.0f };
 constexpr Math::Vector3 kGameplayCameraRotation = { 0.3f, 0.0f, 0.0f };
 constexpr Math::Vector3 kGameplayCameraRotationForOpening = { 0.3f, kPi * 2.0f, 0.0f };
+constexpr Math::Vector3 kGhostOpeningPosition = { 0.0f, 0.25f, -4.25f };
+constexpr Math::Vector3 kGhostHiddenPosition = { 0.0f, 0.25f, -13.0f };
+constexpr Math::Vector3 kGhostScale = { 0.70f, 0.70f, 0.70f };
 
 struct StartRunLayout {
 	Math::Vector2 position;
@@ -131,20 +135,31 @@ void GamePlayScene::Initialize() {
 	}
 	// プレイヤーとコース、障害物に必要なモデルを読み込む。
 	ModelManager::GetInstance()->LoadModel("human/Mannequin_Large.glb");
+	ModelManager::GetInstance()->LoadModel("Ghost.gltf");
 	ModelManager::GetInstance()->LoadModel("road.obj");
 	ModelManager::GetInstance()->LoadModel("tyoutin.obj");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
+	ghostModel_ = ModelManager::GetInstance()->FindModel("Ghost.gltf");
 	// ゲーム内の各管理オブジェクトを生成する。
 	player_ = std::make_unique<Player>();
 	player_->Initialize(object3dCommon_, input_);
+	// スタート演出で、自機の後方から追ってくる祟りを表示する。
+	ghostObject_ = std::make_unique<Object3d>();
+	ghostObject_->Initialize(object3dCommon_);
+	ghostObject_->SetModel("Ghost.gltf");
+	ghostObject_->SetScale(kGhostScale);
+	ghostObject_->SetRotate({ 0.0f, 0.0f, 0.0f });
+	ghostObject_->SetTranslate(kGhostOpeningPosition);
 	courseManager_ = std::make_unique<CourseManager>();
 	courseManager_->Initialize(object3dCommon_);
 	obstacleManager_ = std::make_unique<ObstacleManager>();
 	obstacleManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
 	deathAnimation_ = LoadAnimationFile("resources/human", "Standing Death Forward 01.fbx");
+	ghostAnimation_ = LoadAnimationFile("resources", "Ghost.gltf", "Fast_Flying");
 	// 演出中に描画できるよう、各3Dオブジェクトの行列だけ先に作る。
 	player_->Update();
+	ghostObject_->Update();
 	courseManager_->UpdateTransformOnly();
 	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
 	openingCameraTime_ = 0.0f;
@@ -159,7 +174,11 @@ void GamePlayScene::Finalize() {
 	player_->Finalize();
 	courseManager_->Finalize();
 	obstacleManager_->Finalize();
-	player_.reset(); courseManager_.reset(); obstacleManager_.reset();
+	player_.reset();
+	ghostObject_.reset();
+	ghostModel_ = nullptr;
+	courseManager_.reset();
+	obstacleManager_.reset();
 	hpSprites_.clear();
 	startRunSprites_.clear();
 	startRunAppearRanks_.clear();
@@ -190,6 +209,11 @@ void GamePlayScene::Update() {
 	}
 	// 走行アニメーションを繰り返し再生する。
 	if (animatedModel_ && animation_.duration > 0) { animationTime_ = std::fmod(animationTime_ + kDeltaTime, animation_.duration); animatedModel_->UpdateSkeleton(animation_, animationTime_); }
+	// 祟りの飛行モーションを繰り返し再生する。
+	if (ghostModel_ && ghostAnimation_.duration > 0.0f) {
+		ghostAnimationTime_ = std::fmod(ghostAnimationTime_ + kDeltaTime, ghostAnimation_.duration);
+		ghostModel_->UpdateSkeleton(ghostAnimation_, ghostAnimationTime_);
+	}
 
 	// カメラ演出が終わるまではコースと障害物を動かさない。
 	if (!gameplayStarted_) {
@@ -198,6 +222,7 @@ void GamePlayScene::Update() {
 		camera_->Update();
 		// 自機は移動させず、移動中のカメラだけを描画へ反映する。
 		player_->UpdateTransformOnly();
+		UpdateGhost();
 		// 床は流すが、演出中は再配置を止めて画面内で消えるのを防ぐ。
 		courseManager_->Update(camera_->GetTranslate().z, false);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
@@ -208,6 +233,7 @@ void GamePlayScene::Update() {
 	// カメラ・プレイヤー・コース・障害物を順番に更新する。
 	camera_->Update();
 	player_->Update();
+	UpdateGhost();
 	courseManager_->Update(camera_->GetTranslate().z);
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
 	// 無敵中でなければ障害物との当たり判定を行う。
@@ -222,6 +248,22 @@ void GamePlayScene::Update() {
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
 	UpdateStartRunEffect();
 	UpdateSceneReveal();
+}
+
+void GamePlayScene::UpdateGhost() {
+	if (!ghostObject_) {
+		return;
+	}
+
+	// 正面カメラでは自機の後ろに見せ、カメラが回り込む間に後方へ下げる。
+	// 操作開始後はカメラより後ろにいるため、通常プレイの視界を塞がない。
+	const float moveTime = openingCameraTime_ - kOpeningHoldDuration;
+	const float t = std::clamp(moveTime / kOpeningMoveDuration, 0.0f, 1.0f);
+	const float eased = SmoothStep(t);
+	Math::Vector3 position = LerpVector3(kGhostOpeningPosition, kGhostHiddenPosition, eased);
+	position.y += std::sin(ghostAnimationTime_ * 3.0f) * 0.08f;
+	ghostObject_->SetTranslate(position);
+	ghostObject_->Update();
 }
 
 void GamePlayScene::UpdateOpeningCamera() {
@@ -548,6 +590,9 @@ void GamePlayScene::Draw() {
 	courseManager_->Draw();
 	if (gameplayStarted_) {
 		obstacleManager_->Draw();
+	}
+	if (ghostObject_) {
+		ghostObject_->Draw();
 	}
 	player_->Draw();
 

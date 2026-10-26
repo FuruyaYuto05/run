@@ -112,7 +112,7 @@ void GamePlayScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/startRun.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handR.png");
-	TextureManager::GetInstance()->LoadTexture("monsterBall.png");
+	TextureManager::GetInstance()->LoadTexture("resources/monsterBall.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
 	// 最初はプレイヤーの顔を正面から映す。

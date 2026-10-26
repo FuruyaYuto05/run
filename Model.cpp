@@ -245,6 +245,11 @@ void Model::LoadGltfFile(const std::string& directoryPath, const std::string& fi
     modelData_.rootNode = ReadNode(scene->mRootNode);
 
     skeleton_ = CreateSkeleton(modelData_.rootNode);
+    bindPoseTransforms_.clear();
+    bindPoseTransforms_.reserve(skeleton_.joints.size());
+    for (const Joint& joint : skeleton_.joints) {
+        bindPoseTransforms_.push_back(joint.transform);
+    }
 
     modelData_.vertices.clear();
     modelData_.indices.clear();
@@ -620,6 +625,13 @@ void Model::Update(SkinCluster& skinCluster, const Skeleton& skeleton)
 
 void Model::ApplyAnimation(Skeleton& skeleton, const Animation& animation, float animationTime)
 {
+    // 前に再生していたアニメーションだけが持つボーン姿勢を残さない。
+    // 全ボーンをモデル読み込み時の姿勢へ戻してから、現在のアニメーションを重ねる。
+    const size_t resetCount = (std::min)(skeleton.joints.size(), bindPoseTransforms_.size());
+    for (size_t jointIndex = 0; jointIndex < resetCount; ++jointIndex) {
+        skeleton.joints[jointIndex].transform = bindPoseTransforms_[jointIndex];
+    }
+
     for (Joint& joint : skeleton.joints) {
         if (auto it = animation.nodeAnimations.find(joint.name); it != animation.nodeAnimations.end()) {
             const NodeAnimation& rootNodeAnimation = it->second;

@@ -194,7 +194,7 @@ void GameOverScene::UpdateHands() {
 		stamp.sprite->SetColor({ 1.0f, 1.0f, 1.0f, eased * 0.75f });
 		stamp.sprite->Update();
 	}
-}yytu htyfum::ku89rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+}
 
 void GameOverScene::UpdateLayout() {
 	const float textT = std::clamp(

@@ -121,6 +121,8 @@ private: // メンバ変数
     ModelData modelData_;
 
     Skeleton skeleton_;
+    // アニメーション切り替え時に前の姿勢を残さないための初期姿勢。
+    std::vector<Math::QuaternionTransform> bindPoseTransforms_;
     SkinCluster skinCluster_;
 
     // 頂点リソース関連 (Object3dから引っ越し)

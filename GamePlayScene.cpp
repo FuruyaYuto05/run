@@ -1,5 +1,6 @@
 #include "GamePlayScene.h"
 #include "Camera.h"
+#include "Object3d.h"
 #include "Object3dCommon.h"
 #include "Model.h"
 #include "ModelManager.h"
@@ -10,7 +11,6 @@
 #include "CourseManager.h"
 #include "ObstacleManager.h"
 #include "GameOverScene.h"
-#include "TitleScene.h"
 #include "SceneManager.h"
 #include <algorithm>
 #include <array>
@@ -26,8 +26,6 @@ namespace {
 constexpr float kDeltaTime = 1.0f / 60.0f;
 constexpr float kOpeningHoldDuration = 0.85f;
 constexpr float kOpeningMoveDuration = 2.80f;
-constexpr float kReturnToTitleWaitDuration = 1.00f;
-constexpr float kReturnToTitleFadeDuration = 0.60f;
 constexpr float kPi = 3.1415927f;
 constexpr Math::Vector3 kOpeningCameraPosition = { 0.0f, 2.4f, 5.5f };
 constexpr Math::Vector3 kOpeningCameraRotation = { 0.266f, kPi, 0.0f };
@@ -36,6 +34,9 @@ constexpr Math::Vector3 kOpeningControlPoint2 = { 5.0f, 3.8f, -5.5f };
 constexpr Math::Vector3 kGameplayCameraPosition = { 0.0f, 4.0f, -10.0f };
 constexpr Math::Vector3 kGameplayCameraRotation = { 0.3f, 0.0f, 0.0f };
 constexpr Math::Vector3 kGameplayCameraRotationForOpening = { 0.3f, kPi * 2.0f, 0.0f };
+constexpr Math::Vector3 kGhostOpeningPosition = { 0.0f, 0.25f, -4.25f };
+constexpr Math::Vector3 kGhostHiddenPosition = { 0.0f, 0.25f, -13.0f };
+constexpr Math::Vector3 kGhostScale = { 0.70f, 0.70f, 0.70f };
 
 struct StartRunLayout {
 	Math::Vector2 position;
@@ -62,6 +63,15 @@ constexpr float kStartRunAppearInterval = 0.25f;
 constexpr float kStartRunPopDuration = 0.12f;
 constexpr float kStartRunFadeDuration = 0.60f;
 constexpr float kStartRunSizeScale = 1.65f;
+// 提出用：操作開始後、この秒数でゲームオーバー演出を確認する。
+constexpr float kAutoGameOverDelay = 3.0f;
+constexpr float kDeathImpactDuration = 0.28f;
+constexpr float kDeathHoldDuration = 0.45f;
+constexpr float kDeathHandCoverDuration = 0.85f;
+constexpr float kDeathFadeDuration = 0.65f;
+constexpr int kDeathHandColumns = 6;
+constexpr int kDeathHandRows = 4;
+constexpr int kDeathHandCount = kDeathHandColumns * kDeathHandRows;
 
 float SmoothStep(float t) {
 	return t * t * (3.0f - 2.0f * t);
@@ -106,7 +116,9 @@ void GamePlayScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/uvChecker.png");
 	TextureManager::GetInstance()->LoadTexture("resources/life.png");
 	TextureManager::GetInstance()->LoadTexture("resources/startRun.png");
-	TextureManager::GetInstance()->LoadTexture("monsterBall.png");
+	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
+	TextureManager::GetInstance()->LoadTexture("resources/scene/handR.png");
+	TextureManager::GetInstance()->LoadTexture("resources/monsterBall.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
 	// 最初はプレイヤーの顔を正面から映す。
@@ -125,34 +137,39 @@ void GamePlayScene::Initialize() {
 	}
 	// プレイヤーとコース、障害物に必要なモデルを読み込む。
 	ModelManager::GetInstance()->LoadModel("human/Mannequin_Large.glb");
+	ModelManager::GetInstance()->LoadModel("Ghost.gltf");
 	ModelManager::GetInstance()->LoadModel("road.obj");
 	ModelManager::GetInstance()->LoadModel("tyoutin.obj");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
+	ghostModel_ = ModelManager::GetInstance()->FindModel("Ghost.gltf");
 	// ゲーム内の各管理オブジェクトを生成する。
 	player_ = std::make_unique<Player>();
 	player_->Initialize(object3dCommon_, input_);
+	// スタート演出で、自機の後方から追ってくる祟りを表示する。
+	ghostObject_ = std::make_unique<Object3d>();
+	ghostObject_->Initialize(object3dCommon_);
+	ghostObject_->SetModel("Ghost.gltf");
+	ghostObject_->SetScale(kGhostScale);
+	ghostObject_->SetRotate({ 0.0f, 0.0f, 0.0f });
+	ghostObject_->SetTranslate(kGhostOpeningPosition);
 	courseManager_ = std::make_unique<CourseManager>();
 	courseManager_->Initialize(object3dCommon_);
 	obstacleManager_ = std::make_unique<ObstacleManager>();
 	obstacleManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
+	deathAnimation_ = LoadAnimationFile("resources/human", "Standing Death Forward 01.fbx");
+	ghostAnimation_ = LoadAnimationFile("resources", "Ghost.gltf", "Fast_Flying");
 	// 演出中に描画できるよう、各3Dオブジェクトの行列だけ先に作る。
 	player_->Update();
+	ghostObject_->Update();
 	courseManager_->UpdateTransformOnly();
 	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
 	openingCameraTime_ = 0.0f;
-	returnToTitleTime_ = 0.0f;
+	gameplayTime_ = 0.0f;
 	gameplayStarted_ = false;
 	InitializeStartRunEffect();
 	InitializeSceneReveal();
-
-	// スタート演出後にタイトルへ戻るための黒フェード。
-	returnFadeSprite_ = std::make_unique<Sprite>();
-	returnFadeSprite_->Initialize(SpriteCommon::GetInstance(), "resources/human/white.png");
-	returnFadeSprite_->SetPosition({ 640.0f, 360.0f });
-	returnFadeSprite_->SetSize({ 1280.0f, 720.0f });
-	returnFadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
-	returnFadeSprite_->Update();
+	InitializeGameOverEffect();
 }
 
 void GamePlayScene::Finalize() {
@@ -160,13 +177,19 @@ void GamePlayScene::Finalize() {
 	player_->Finalize();
 	courseManager_->Finalize();
 	obstacleManager_->Finalize();
-	player_.reset(); courseManager_.reset(); obstacleManager_.reset();
+	player_.reset();
+	ghostObject_.reset();
+	ghostModel_ = nullptr;
+	courseManager_.reset();
+	obstacleManager_.reset();
 	hpSprites_.clear();
 	startRunSprites_.clear();
 	startRunAppearRanks_.clear();
 	revealLeftSprite_.reset();
 	revealRightSprite_.reset();
-	returnFadeSprite_.reset();
+	deathHandStamps_.clear();
+	gameOverTintSprite_.reset();
+	gameOverFadeSprite_.reset();
 	camera_.reset();
 }
 
@@ -183,8 +206,17 @@ void GamePlayScene::Update() {
 	if (ImGui::DragFloat3("Rotation", &cameraRotation.x, 0.01f)) { camera_->SetRotate(cameraRotation); }
 	ImGui::End();
 #endif
+	if (gameOverPhase_ != GameOverPhase::None) {
+		UpdateGameOverSequence();
+		return;
+	}
 	// 走行アニメーションを繰り返し再生する。
 	if (animatedModel_ && animation_.duration > 0) { animationTime_ = std::fmod(animationTime_ + kDeltaTime, animation_.duration); animatedModel_->UpdateSkeleton(animation_, animationTime_); }
+	// 祟りの飛行モーションを繰り返し再生する。
+	if (ghostModel_ && ghostAnimation_.duration > 0.0f) {
+		ghostAnimationTime_ = std::fmod(ghostAnimationTime_ + kDeltaTime, ghostAnimation_.duration);
+		ghostModel_->UpdateSkeleton(ghostAnimation_, ghostAnimationTime_);
+	}
 
 	// カメラ演出が終わるまではコースと障害物を動かさない。
 	if (!gameplayStarted_) {
@@ -193,6 +225,7 @@ void GamePlayScene::Update() {
 		camera_->Update();
 		// 自機は移動させず、移動中のカメラだけを描画へ反映する。
 		player_->UpdateTransformOnly();
+		UpdateGhost();
 		// 床は流すが、演出中は再配置を止めて画面内で消えるのを防ぐ。
 		courseManager_->Update(camera_->GetTranslate().z, false);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
@@ -203,13 +236,20 @@ void GamePlayScene::Update() {
 	// カメラ・プレイヤー・コース・障害物を順番に更新する。
 	camera_->Update();
 	player_->Update();
+	UpdateGhost();
 	courseManager_->Update(camera_->GetTranslate().z);
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
+	// 提出時に一連のゲームオーバー演出を確実に確認できるよう自動で開始する。
+	gameplayTime_ += kDeltaTime;
+	if (gameplayTime_ >= kAutoGameOverDelay) {
+		StartGameOverSequence();
+		return;
+	}
 	// 無敵中でなければ障害物との当たり判定を行う。
 	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
 		if (player_->IsDead()) {
-			sceneManager_->SetNextScene(std::make_unique<GameOverScene>());
+			StartGameOverSequence();
 			return;
 		}
 	}
@@ -217,20 +257,22 @@ void GamePlayScene::Update() {
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
 	UpdateStartRunEffect();
 	UpdateSceneReveal();
+}
 
-	// 後方カメラ到着後は少し走り、黒く暗転してからタイトルへ戻る。
-	returnToTitleTime_ += kDeltaTime;
-	const float returnFadeAlpha = std::clamp(
-		(returnToTitleTime_ - kReturnToTitleWaitDuration) /
-		kReturnToTitleFadeDuration,
-		0.0f,
-		1.0f);
-	returnFadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, returnFadeAlpha });
-	returnFadeSprite_->Update();
-	if (returnFadeAlpha >= 1.0f) {
-		sceneManager_->SetNextScene(std::make_unique<TitleScene>());
+void GamePlayScene::UpdateGhost() {
+	if (!ghostObject_) {
 		return;
 	}
+
+	// 正面カメラでは自機の後ろに見せ、カメラが回り込む間に後方へ下げる。
+	// 操作開始後はカメラより後ろにいるため、通常プレイの視界を塞がない。
+	const float moveTime = openingCameraTime_ - kOpeningHoldDuration;
+	const float t = std::clamp(moveTime / kOpeningMoveDuration, 0.0f, 1.0f);
+	const float eased = SmoothStep(t);
+	Math::Vector3 position = LerpVector3(kGhostOpeningPosition, kGhostHiddenPosition, eased);
+	position.y += std::sin(ghostAnimationTime_ * 3.0f) * 0.08f;
+	ghostObject_->SetTranslate(position);
+	ghostObject_->Update();
 }
 
 void GamePlayScene::UpdateOpeningCamera() {
@@ -381,11 +423,185 @@ void GamePlayScene::UpdateSceneReveal() {
 	}
 }
 
+void GamePlayScene::InitializeGameOverEffect() {
+	// 白画像を着色し、暗い赤のフラッシュと最後の暗転に使う。
+	gameOverTintSprite_ = std::make_unique<Sprite>();
+	gameOverTintSprite_->Initialize(SpriteCommon::GetInstance(), "resources/human/white.png");
+	gameOverTintSprite_->SetPosition({ 640.0f, 360.0f });
+	gameOverTintSprite_->SetSize({ 1280.0f, 720.0f });
+	gameOverTintSprite_->SetColor({ 0.32f, 0.0f, 0.0f, 0.0f });
+	gameOverTintSprite_->Update();
+
+	gameOverFadeSprite_ = std::make_unique<Sprite>();
+	gameOverFadeSprite_->Initialize(SpriteCommon::GetInstance(), "resources/human/white.png");
+	gameOverFadeSprite_->SetPosition({ 640.0f, 360.0f });
+	gameOverFadeSprite_->SetSize({ 1280.0f, 720.0f });
+	gameOverFadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.0f });
+	gameOverFadeSprite_->Update();
+
+	deathHandStamps_.clear();
+	deathHandStamps_.reserve(kDeathHandCount);
+	constexpr float kCellWidth = 1280.0f / static_cast<float>(kDeathHandColumns);
+	constexpr float kCellHeight = 720.0f / static_cast<float>(kDeathHandRows);
+	for (int i = 0; i < kDeathHandCount; ++i) {
+		DeathHandStamp stamp{};
+		stamp.sprite = std::make_unique<Sprite>();
+		stamp.sprite->Initialize(
+			SpriteCommon::GetInstance(),
+			NextDeathHandRandom01() < 0.5f ? "resources/scene/handL.png" : "resources/scene/handR.png");
+
+		const int column = i % kDeathHandColumns;
+		const int row = i / kDeathHandColumns;
+		const float jitterX = (NextDeathHandRandom01() - 0.5f) * kCellWidth * 0.90f;
+		const float jitterY = (NextDeathHandRandom01() - 0.5f) * kCellHeight * 0.80f;
+		const float size = 300.0f + NextDeathHandRandom01() * 200.0f;
+		stamp.baseSize = { size, size };
+		stamp.appearTime = NextDeathHandRandom01() * 0.62f;
+		stamp.sprite->SetPosition({
+			(static_cast<float>(column) + 0.5f) * kCellWidth + jitterX,
+			(static_cast<float>(row) + 0.5f) * kCellHeight + jitterY,
+		});
+		stamp.sprite->SetRotation({
+			0.0f,
+			0.0f,
+			-0.75f + NextDeathHandRandom01() * 1.50f,
+		});
+		stamp.sprite->SetSize({ size * 0.65f, size * 0.65f });
+		stamp.sprite->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
+		stamp.sprite->Update();
+		deathHandStamps_.push_back(std::move(stamp));
+	}
+
+	gameOverPhase_ = GameOverPhase::None;
+	gameOverPhaseTime_ = 0.0f;
+}
+
+void GamePlayScene::StartGameOverSequence() {
+	// 即座にシーンを変えず、最後の被弾を見せてから暗転する。
+	gameOverPhase_ = GameOverPhase::Impact;
+	gameOverPhaseTime_ = 0.0f;
+	deathAnimationTime_ = 0.0f;
+	player_->BeginDeathAnimation();
+	if (animatedModel_ && deathAnimation_.duration > 0.0f) {
+		animatedModel_->UpdateSkeleton(deathAnimation_, 0.0f);
+	}
+	startRunEffectActive_ = false;
+	sceneRevealActive_ = false;
+}
+
+void GamePlayScene::UpdateGameOverSequence() {
+	gameOverPhaseTime_ += kDeltaTime;
+	float redAlpha = 0.0f;
+	float blackAlpha = 0.0f;
+
+	switch (gameOverPhase_) {
+	case GameOverPhase::Impact: {
+		const float t = std::clamp(gameOverPhaseTime_ / kDeathImpactDuration, 0.0f, 1.0f);
+		const float shake = (1.0f - t) * 0.16f;
+		camera_->SetTranslate({
+			kGameplayCameraPosition.x + std::sin(gameOverPhaseTime_ * 85.0f) * shake,
+			kGameplayCameraPosition.y + std::cos(gameOverPhaseTime_ * 73.0f) * shake,
+			kGameplayCameraPosition.z,
+		});
+		redAlpha = (1.0f - t) * 0.60f;
+		player_->UpdateTransformOnly();
+		if (t >= 1.0f) {
+			gameOverPhase_ = GameOverPhase::Falling;
+			gameOverPhaseTime_ = 0.0f;
+			camera_->SetTranslate(kGameplayCameraPosition);
+		}
+		break;
+	}
+	case GameOverPhase::Falling: {
+		const float duration = (std::max)(deathAnimation_.duration, kDeltaTime);
+		deathAnimationTime_ = (std::min)(gameOverPhaseTime_, duration);
+		const float t = std::clamp(deathAnimationTime_ / duration, 0.0f, 1.0f);
+		if (animatedModel_) {
+			animatedModel_->UpdateSkeleton(deathAnimation_, deathAnimationTime_);
+		}
+		player_->UpdateTransformOnly();
+		redAlpha = 0.10f * (1.0f - t);
+		if (t >= 1.0f) {
+			gameOverPhase_ = GameOverPhase::Hold;
+			gameOverPhaseTime_ = 0.0f;
+		}
+		break;
+	}
+	case GameOverPhase::Hold:
+		if (animatedModel_) {
+			animatedModel_->UpdateSkeleton(deathAnimation_, deathAnimation_.duration);
+		}
+		player_->UpdateTransformOnly();
+		if (gameOverPhaseTime_ >= kDeathHoldDuration) {
+			gameOverPhase_ = GameOverPhase::HandCover;
+			gameOverPhaseTime_ = 0.0f;
+		}
+		break;
+	case GameOverPhase::HandCover: {
+		const float t = std::clamp(gameOverPhaseTime_ / kDeathHandCoverDuration, 0.0f, 1.0f);
+		if (animatedModel_) {
+			animatedModel_->UpdateSkeleton(deathAnimation_, deathAnimation_.duration);
+		}
+		player_->UpdateTransformOnly();
+		redAlpha = SmoothStep(t) * 0.58f;
+		UpdateDeathHands(gameOverPhaseTime_);
+		if (t >= 1.0f) {
+			gameOverPhase_ = GameOverPhase::FadeOut;
+			gameOverPhaseTime_ = 0.0f;
+		}
+		break;
+	}
+	case GameOverPhase::FadeOut: {
+		const float t = std::clamp(gameOverPhaseTime_ / kDeathFadeDuration, 0.0f, 1.0f);
+		if (animatedModel_) {
+			animatedModel_->UpdateSkeleton(deathAnimation_, deathAnimation_.duration);
+		}
+		player_->UpdateTransformOnly();
+		redAlpha = 0.58f;
+		blackAlpha = SmoothStep(t);
+		UpdateDeathHands(kDeathHandCoverDuration);
+		if (t >= 1.0f) {
+			sceneManager_->SetNextScene(std::make_unique<GameOverScene>());
+		}
+		break;
+	}
+	case GameOverPhase::None:
+		break;
+	}
+
+	camera_->Update();
+	gameOverTintSprite_->SetColor({ 0.32f, 0.0f, 0.0f, redAlpha });
+	gameOverTintSprite_->Update();
+	gameOverFadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, blackAlpha });
+	gameOverFadeSprite_->Update();
+}
+
+void GamePlayScene::UpdateDeathHands(float time) {
+	constexpr float kStampPopDuration = 0.14f;
+	for (DeathHandStamp& stamp : deathHandStamps_) {
+		const float t = std::clamp(
+			(time - stamp.appearTime) / kStampPopDuration, 0.0f, 1.0f);
+		const float eased = SmoothStep(t);
+		const float scale = 0.65f + eased * 0.35f;
+		stamp.sprite->SetSize({ stamp.baseSize.x * scale, stamp.baseSize.y * scale });
+		stamp.sprite->SetColor({ 1.0f, 1.0f, 1.0f, eased });
+		stamp.sprite->Update();
+	}
+}
+
+float GamePlayScene::NextDeathHandRandom01() {
+	deathHandRandomState_ = deathHandRandomState_ * 1664525u + 1013904223u;
+	return static_cast<float>((deathHandRandomState_ >> 8) & 0x00FFFFFFu) / 16777215.0f;
+}
+
 void GamePlayScene::Draw() {
 	// 3Dゲーム画面を描いた後にHPと遷移用スプライトを重ねる。
 	courseManager_->Draw();
 	if (gameplayStarted_) {
 		obstacleManager_->Draw();
+	}
+	if (ghostObject_) {
+		ghostObject_->Draw();
 	}
 	player_->Draw();
 
@@ -405,5 +621,11 @@ void GamePlayScene::Draw() {
 		revealLeftSprite_->Draw(commandList);
 		revealRightSprite_->Draw(commandList);
 	}
-	returnFadeSprite_->Draw(commandList);
+	if (gameOverPhase_ != GameOverPhase::None) {
+		gameOverTintSprite_->Draw(commandList);
+		for (const DeathHandStamp& stamp : deathHandStamps_) {
+			stamp.sprite->Draw(commandList);
+		}
+		gameOverFadeSprite_->Draw(commandList);
+	}
 }

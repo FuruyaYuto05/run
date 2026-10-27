@@ -22,4 +22,6 @@ public:
 private:
 	std::vector<std::unique_ptr<CourseSegment>> courseSegments_;
 	float moveSpeed_ = 0.1f;
+	float comparisonElapsedTime_ = 0.0f;
+	size_t totalRecycleCount_ = 0;
 };

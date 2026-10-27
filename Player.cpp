@@ -94,6 +94,11 @@ void Player::UpdateTransformOnly() {
 	object3d_->Update();
 }
 
+void Player::BeginDeathAnimation() {
+	// 最後の被弾で非表示になった自機を、死亡アニメーション中は表示する。
+	isVisible_ = true;
+}
+
 void Player::Draw() {
 	if (isVisible_) {
 		object3d_->Draw();

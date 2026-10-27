@@ -16,6 +16,7 @@ public:
 	void Finalize();
 	void Update();
 	void UpdateTransformOnly();
+	void BeginDeathAnimation();
 	void Draw();
 	void DrawImGui();
 	void OnCollision();

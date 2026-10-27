@@ -28,4 +28,8 @@ struct Animation {
 	std::map<std::string, NodeAnimation> nodeAnimations;
 };
 
-Animation LoadAnimationFile(const std::string& directoryPath, const std::  string& filename);
+// animationNameを指定した場合は、複数モーションの中から名前で選択する。
+Animation LoadAnimationFile(
+	const std::string& directoryPath,
+	const std::string& filename,
+	const std::string& animationName = "");

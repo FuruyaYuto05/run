@@ -14,6 +14,7 @@ class Sprite;
 class Player;
 class CourseManager;
 class ObstacleManager;
+class ItemManager;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -46,6 +47,10 @@ private:
 	void UpdateStartRunEffect();
 	void InitializeSceneReveal();
 	void UpdateSceneReveal();
+	void InitializeGameUi();
+	void UpdateGameUi();
+	void InitializeScoreUi();
+	void UpdateScoreUi();
 	void InitializeGameOverEffect();
 	void StartGameOverSequence();
 	void UpdateGameOverSequence();
@@ -58,6 +63,7 @@ private:
 	std::unique_ptr<Object3d> ghostObject_;
 	std::unique_ptr<CourseManager> courseManager_;
 	std::unique_ptr<ObstacleManager> obstacleManager_;
+	std::unique_ptr<ItemManager> itemManager_;
 	Model* animatedModel_ = nullptr;
 	Model* ghostModel_ = nullptr;
 	std::vector<std::unique_ptr<Sprite>> hpSprites_;
@@ -65,6 +71,10 @@ private:
 	std::vector<size_t> startRunAppearRanks_;
 	std::unique_ptr<Sprite> revealLeftSprite_;
 	std::unique_ptr<Sprite> revealRightSprite_;
+	std::unique_ptr<Sprite> tutorialSprite_;
+	std::unique_ptr<Sprite> spiritGaugeBackSprite_;
+	std::unique_ptr<Sprite> spiritGaugeFillSprite_;
+	std::vector<std::unique_ptr<Sprite>> scoreDigitSprites_;
 	std::unique_ptr<Sprite> gameOverTintSprite_;
 	std::unique_ptr<Sprite> gameOverFadeSprite_;
 	std::vector<DeathHandStamp> deathHandStamps_;
@@ -77,9 +87,13 @@ private:
 	float openingCameraTime_ = 0.0f;
 	float startRunFadeTime_ = 0.0f;
 	float sceneRevealTime_ = 0.0f;
+	float tutorialFadeTime_ = 0.0f;
 	bool gameplayStarted_ = false;
 	bool startRunEffectActive_ = true;
 	bool sceneRevealActive_ = true;
+	bool tutorialActive_ = true;
+	int soulCollectedCount_ = 0;
+	int score_ = 0;
 	GameOverPhase gameOverPhase_ = GameOverPhase::None;
 	float gameOverPhaseTime_ = 0.0f;
 	uint32_t deathHandRandomState_ = 0x6D2B79F5u;

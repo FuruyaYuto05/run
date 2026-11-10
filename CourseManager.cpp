@@ -18,6 +18,10 @@ constexpr float kCourseSegmentHalfLength = kCourseSegmentLength * 0.5f;
 // 最初のコースセグメントのZ座標
 constexpr float kFirstCourseSegmentZ = 5.0f;
 constexpr float kDeltaTime = 1.0f / 60.0f;
+// 15秒ごとに少しずつ速くし、慣れてきた頃に緊張感を上げる。
+constexpr float kSpeedUpIntervalSeconds = 15.0f;
+constexpr float kSpeedUpAmount = 0.02f;
+constexpr float kMaxMoveSpeed = 0.30f;
 }
 
 CourseManager::CourseManager() = default;
@@ -33,6 +37,8 @@ void CourseManager::Initialize(Object3dCommon* object3dCommon) {
 		courseSegments_.push_back(std::move(courseSegment));
 	}
 	comparisonElapsedTime_ = 0.0f;
+	runDistance_ = 0.0f;
+	moveSpeed_ = initialMoveSpeed_;
 	totalRecycleCount_ = 0;
 }
 
@@ -56,6 +62,10 @@ void CourseManager::Update(float cameraZ, bool recycleSegments) {
 	}
 	if (recycleSegments) {
 		comparisonElapsedTime_ += kDeltaTime;
+		const int speedLevel = static_cast<int>(comparisonElapsedTime_ / kSpeedUpIntervalSeconds);
+		moveSpeed_ = std::min(initialMoveSpeed_ + speedLevel * kSpeedUpAmount, kMaxMoveSpeed);
+		// スクロールした床の距離を、プレイ距離として記録する。
+		runDistance_ += moveSpeed_;
 		// 最も奥にある床の位置を基準に、通過した床を前方へ再配置する。
 		float furthestZ = courseSegments_.front()->GetPosition().z;
 		for (const auto& courseSegment : courseSegments_) {
@@ -93,9 +103,9 @@ void CourseManager::Draw() {
 void CourseManager::DrawImGui() {
 #ifdef USE_IMGUI
 	ImGui::Begin("Course Settings");
-	ImGui::DragFloat("Move Speed", &moveSpeed_, 0.01f, 0.0f, 10.0f);
-	if (moveSpeed_ < 0.0f) {
-		moveSpeed_ = 0.0f;
+	ImGui::DragFloat("Initial Move Speed", &initialMoveSpeed_, 0.01f, 0.0f, kMaxMoveSpeed);
+	if (initialMoveSpeed_ < 0.0f) {
+		initialMoveSpeed_ = 0.0f;
 	}
 
 	const ImGuiIO& io = ImGui::GetIO();
@@ -106,6 +116,8 @@ void CourseManager::DrawImGui() {
 		{ 0.25f, 1.0f, 0.45f, 1.0f },
 		"Mode: Floor Reuse");
 	ImGui::Text("Elapsed Time: %.1f sec", comparisonElapsedTime_);
+	ImGui::Text("Run Distance: %.0f", runDistance_);
+	ImGui::Text("Current Speed: %.2f", moveSpeed_);
 	ImGui::Text("Initial Segments: %d", kCourseSegmentCount);
 	ImGui::Text("Current Segments: %zu", courseSegments_.size());
 	ImGui::Text("Newly Generated: 0");

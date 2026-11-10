@@ -14,6 +14,13 @@ constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
 constexpr int kInvincibleFrames = 120;
 constexpr int kBlinkIntervalFrames = 6;
 constexpr int kInitialHp = 3;
+constexpr float kMaxSpirit = 100.0f;
+// 魂を取り続けないと霊力がじわじわ尽きる速度。
+constexpr float kSpiritDrainPerSecond = 6.0f;
+constexpr float kCollisionSpiritDamage = 35.0f;
+constexpr float kGroundY = 0.0f;
+constexpr float kJumpVelocity = 0.22f;
+constexpr float kGravity = 0.012f;
 }
 
 Player::Player() = default;
@@ -25,9 +32,13 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	// シーンに入る前から押されていたキーは、新しい入力として扱わない。
 	previousLeftPressed_ = input_->Pushkey(DIK_A);
 	previousRightPressed_ = input_->Pushkey(DIK_D);
+	previousJumpPressed_ = input_->Pushkey(DIK_SPACE);
 	invincibleTimer_ = 0;
 	isVisible_ = true;
 	hp_ = kInitialHp;
+	spirit_ = kMaxSpirit;
+	verticalVelocity_ = 0.0f;
+	isGrounded_ = true;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
 	object3d_->SetModel("human/Mannequin_Large.glb");
@@ -58,12 +69,15 @@ void Player::Update() {
 	// 左右の入力を取得する。押している間はtrueになる。
 	const bool leftPressed = input_->Pushkey(DIK_A);
 	const bool rightPressed = input_->Pushkey(DIK_D);
+	const bool jumpPressed = input_->Pushkey(DIK_SPACE);
 	// 押した瞬間だけ反応するようにするため、前回の状態と比較してトリガーを判定する。
 	const bool triggerLeft = leftPressed && !previousLeftPressed_;
 	const bool triggerRight = rightPressed && !previousRightPressed_;
+	const bool triggerJump = jumpPressed && !previousJumpPressed_;
 	// 前回の状態を更新する。
 	previousLeftPressed_ = leftPressed;
 	previousRightPressed_ = rightPressed;
+	previousJumpPressed_ = jumpPressed;
 
 	bool acceptInput = true;
 #ifdef USE_IMGUI
@@ -80,6 +94,21 @@ void Player::Update() {
 	}
 	// レーンの範囲を制限する。
 	laneIndex_ = std::clamp(laneIndex_, 0, kLaneCount - 1);
+
+	// 地上でSPACEを押したときだけジャンプする。
+	if (acceptInput && triggerJump && isGrounded_) {
+		verticalVelocity_ = kJumpVelocity;
+		isGrounded_ = false;
+	}
+	if (!isGrounded_) {
+		position.y += verticalVelocity_;
+		verticalVelocity_ -= kGravity;
+		if (position.y <= kGroundY) {
+			position.y = kGroundY;
+			verticalVelocity_ = 0.0f;
+			isGrounded_ = true;
+		}
+	}
 
 	// 目標まで一定速度で移動する。残り距離が小さければ目標に止める。
 	const float targetX = kLanePositions[laneIndex_];
@@ -107,12 +136,47 @@ void Player::Draw() {
 
 void Player::OnCollision() {
 	if (!IsInvincible()) {
-		if (hp_ > 0) {
-			--hp_;
-		}
+		ReduceSpirit(kCollisionSpiritDamage);
 		invincibleTimer_ = kInvincibleFrames;
 		isVisible_ = false;
 	}
+}
+
+void Player::UpdateSpirit(float deltaSeconds) {
+	ReduceSpirit(kSpiritDrainPerSecond * deltaSeconds);
+}
+
+void Player::RecoverSpirit(float amount) {
+	if (hp_ <= 0 || amount <= 0.0f) {
+		return;
+	}
+	spirit_ = std::clamp(spirit_ + amount, 0.0f, kMaxSpirit);
+}
+
+void Player::RecoverHp(int amount) {
+	if (hp_ <= 0 || amount <= 0) {
+		return;
+	}
+	hp_ = std::clamp(hp_ + amount, 0, kInitialHp);
+}
+
+float Player::GetSpiritRatio() const {
+	return std::clamp(spirit_ / kMaxSpirit, 0.0f, 1.0f);
+}
+
+void Player::ReduceSpirit(float amount) {
+	if (hp_ <= 0 || amount <= 0.0f) {
+		return;
+	}
+
+	spirit_ = std::clamp(spirit_ - amount, 0.0f, kMaxSpirit);
+	if (spirit_ > 0.0f) {
+		return;
+	}
+
+	--hp_;
+	// お札が残っていれば、次の1枚分として霊力を全回復する。
+	spirit_ = hp_ > 0 ? kMaxSpirit : 0.0f;
 }
 
 // プレイヤーの位置を取得する
@@ -136,6 +200,8 @@ void Player::DrawImGui() {
 	ImGui::Text("Invincible: %s", IsInvincible() ? "true" : "false");
 	ImGui::Text("Invincible Timer: %d", invincibleTimer_);
 	ImGui::Text("HP: %d", hp_);
+	ImGui::Text("Spirit: %.1f / %.1f", spirit_, kMaxSpirit);
+	ImGui::Text("Grounded: %s", isGrounded_ ? "true" : "false");
 
 	Math::Vector3 rotation = object3d_->GetRotate();
 	if (ImGui::DragFloat3("Rotation", &rotation.x, 0.01f)) {

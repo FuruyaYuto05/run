@@ -165,6 +165,8 @@
     <ClCompile Include="GamePlayScene.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="Input.cpp" />
+	<ClCompile Include="Item.cpp" />
+	<ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="Logger.cpp" />
@@ -272,6 +274,8 @@
     <ClInclude Include="GamePlayScene.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="Input.h" />
+	<ClInclude Include="Item.h" />
+	<ClInclude Include="ItemManager.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="Logger.h" />
@@ -357,6 +361,42 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>resources\tyoutinC.png</TargetPath>
     </None>
+	<None Include="resources\maruta.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\maruta.obj</TargetPath>
+	</None>
+	<None Include="resources\maruta.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\maruta.mtl</TargetPath>
+	</None>
+	<None Include="resources\marutaC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\marutaC.png</TargetPath>
+	</None>
+	<None Include="resources\miniSoul.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\miniSoul.obj</TargetPath>
+	</None>
+	<None Include="resources\miniSoul.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\miniSoul.mtl</TargetPath>
+	</None>
+	<None Include="resources\miniSoulC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\miniSoulC.png</TargetPath>
+	</None>
+	<None Include="resources\healOhuda.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\healOhuda.obj</TargetPath>
+	</None>
+	<None Include="resources\healOhuda.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\healOhuda.mtl</TargetPath>
+	</None>
+	<None Include="resources\healOhudaC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\healOhudaC.png</TargetPath>
+	</None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />
     <None Include="Skybox.hlsli" />

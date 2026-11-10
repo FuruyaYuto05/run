@@ -18,10 +18,13 @@ public:
 	void Draw();
 	void DrawImGui();
 	float GetMoveSpeed() const { return moveSpeed_; }
+	float GetRunDistance() const { return runDistance_; }
 
 private:
 	std::vector<std::unique_ptr<CourseSegment>> courseSegments_;
-	float moveSpeed_ = 0.1f;
+	float moveSpeed_ = 0.16f;
+	float initialMoveSpeed_ = 0.16f;
 	float comparisonElapsedTime_ = 0.0f;
+	float runDistance_ = 0.0f;
 	size_t totalRecycleCount_ = 0;
 };

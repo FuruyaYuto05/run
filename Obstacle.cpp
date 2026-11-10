@@ -5,12 +5,23 @@
 Obstacle::Obstacle() = default;
 Obstacle::~Obstacle() = default;
 
-void Obstacle::Initialize(Object3dCommon* object3dCommon, const Math::Vector3& initialPosition) {
+void Obstacle::Initialize(Object3dCommon* object3dCommon, const Math::Vector3& initialPosition, ObstacleType type) {
+	type_ = type;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
-	object3d_->SetModel("tyoutin.obj");
-	object3d_->SetScale({ 1.0f, 1.0f, 1.0f });
+	ConfigureModel();
 	object3d_->SetTranslate(initialPosition);
+}
+
+void Obstacle::ConfigureModel() {
+	if (type_ == ObstacleType::Log) {
+		// 道を横断する丸太。低いのでジャンプで越えられる。
+		object3d_->SetModel("maruta.obj");
+		object3d_->SetScale({ 0.55f, 0.55f, 0.55f });
+	} else {
+		object3d_->SetModel("tyoutin.obj");
+		object3d_->SetScale({ 0.65f, 0.65f, 0.65f });
+	}
 }
 
 void Obstacle::Finalize() {
@@ -31,4 +42,12 @@ const Math::Vector3& Obstacle::GetPosition() const {
 
 void Obstacle::SetPosition(const Math::Vector3& position) {
 	object3d_->SetTranslate(position);
+}
+
+void Obstacle::SetType(ObstacleType type) {
+	if (type_ == type) {
+		return;
+	}
+	type_ = type;
+	ConfigureModel();
 }

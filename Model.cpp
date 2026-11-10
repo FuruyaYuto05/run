@@ -191,10 +191,11 @@ void Model::LoadObjFile(const std::string& directoryPath, const std::string& fil
             s >> normal.x >> normal.y >> normal.z;
             normals.push_back(normal);
         } else if (identifier == "f") {
-            VertexData triangle[3];
-            for (int32_t faceVertex = 0; faceVertex < 3; ++faceVertex) {
-                std::string vertexDefiniton;
-                s >> vertexDefiniton;
+            // OBJは三角形だけでなく四角形以上の面を持てるため、
+            // 読み込んだ面を扇状に三角形へ分割する。
+            std::vector<VertexData> faceVertices;
+            std::string vertexDefiniton;
+            while (s >> vertexDefiniton) {
                 std::istringstream v(vertexDefiniton);
                 uint32_t elementIndices[3];
                 for (int32_t element = 0; element < 3; ++element) {
@@ -208,11 +209,13 @@ void Model::LoadObjFile(const std::string& directoryPath, const std::string& fil
                 texcoord.y = 1.0f - texcoord.y;
                 Math::Vector3 normal = normals[elementIndices[2] - 1];
 
-                triangle[faceVertex] = { position, texcoord, normal }; // normalも追加
+                faceVertices.push_back({ position, texcoord, normal });
             }
-            modelData_.vertices.push_back(triangle[2]);
-            modelData_.vertices.push_back(triangle[1]);
-            modelData_.vertices.push_back(triangle[0]);
+            for (size_t index = 1; index + 1 < faceVertices.size(); ++index) {
+                modelData_.vertices.push_back(faceVertices[index + 1]);
+                modelData_.vertices.push_back(faceVertices[index]);
+                modelData_.vertices.push_back(faceVertices[0]);
+            }
         } else if (identifier == "mtllib") {
             std::string materialFilename;
             s >> materialFilename;

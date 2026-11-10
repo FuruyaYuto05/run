@@ -10,6 +10,7 @@
 #include "Player.h"
 #include "CourseManager.h"
 #include "ObstacleManager.h"
+#include "ItemManager.h"
 #include "GameOverScene.h"
 #include "SceneManager.h"
 #include <algorithm>
@@ -67,6 +68,9 @@ constexpr float kDeathImpactDuration = 0.28f;
 constexpr float kDeathHoldDuration = 0.45f;
 constexpr float kDeathHandCoverDuration = 0.85f;
 constexpr float kDeathFadeDuration = 0.65f;
+constexpr float kTutorialHoldDuration = 2.5f;
+constexpr float kTutorialFadeDuration = 0.5f;
+constexpr float kSpiritGaugeFillWidth = 340.0f;
 constexpr int kDeathHandColumns = 6;
 constexpr int kDeathHandRows = 4;
 constexpr int kDeathHandCount = kDeathHandColumns * kDeathHandRows;
@@ -117,6 +121,10 @@ void GamePlayScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handR.png");
 	TextureManager::GetInstance()->LoadTexture("resources/monsterBall.png");
+	TextureManager::GetInstance()->LoadTexture("resources/tutorial.png");
+	TextureManager::GetInstance()->LoadTexture("resources/gageIn.png");
+	TextureManager::GetInstance()->LoadTexture("resources/gageOut.png");
+	TextureManager::GetInstance()->LoadTexture("resources/number.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
 	// 最初はプレイヤーの顔を正面から映す。
@@ -138,6 +146,9 @@ void GamePlayScene::Initialize() {
 	ModelManager::GetInstance()->LoadModel("Ghost.gltf");
 	ModelManager::GetInstance()->LoadModel("road.obj");
 	ModelManager::GetInstance()->LoadModel("tyoutin.obj");
+	ModelManager::GetInstance()->LoadModel("maruta.obj");
+	ModelManager::GetInstance()->LoadModel("miniSoul.obj");
+	ModelManager::GetInstance()->LoadModel("healOhuda.obj");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
 	ghostModel_ = ModelManager::GetInstance()->FindModel("Ghost.gltf");
 	// ゲーム内の各管理オブジェクトを生成する。
@@ -154,6 +165,8 @@ void GamePlayScene::Initialize() {
 	courseManager_->Initialize(object3dCommon_);
 	obstacleManager_ = std::make_unique<ObstacleManager>();
 	obstacleManager_->Initialize(object3dCommon_);
+	itemManager_ = std::make_unique<ItemManager>();
+	itemManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
 	deathAnimation_ = LoadAnimationFile("resources/human", "Standing Death Forward 01.fbx");
 	ghostAnimation_ = LoadAnimationFile("resources", "Ghost.gltf", "Fast_Flying");
@@ -162,10 +175,15 @@ void GamePlayScene::Initialize() {
 	ghostObject_->Update();
 	courseManager_->UpdateTransformOnly();
 	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
+	itemManager_->Update(kGameplayCameraPosition.z, 0.0f, kDeltaTime);
 	openingCameraTime_ = 0.0f;
 	gameplayStarted_ = false;
+	soulCollectedCount_ = 0;
+	score_ = 0;
 	InitializeStartRunEffect();
 	InitializeSceneReveal();
+	InitializeGameUi();
+	InitializeScoreUi();
 	InitializeGameOverEffect();
 }
 
@@ -174,16 +192,22 @@ void GamePlayScene::Finalize() {
 	player_->Finalize();
 	courseManager_->Finalize();
 	obstacleManager_->Finalize();
+	itemManager_->Finalize();
 	player_.reset();
 	ghostObject_.reset();
 	ghostModel_ = nullptr;
 	courseManager_.reset();
 	obstacleManager_.reset();
+	itemManager_.reset();
 	hpSprites_.clear();
 	startRunSprites_.clear();
 	startRunAppearRanks_.clear();
 	revealLeftSprite_.reset();
 	revealRightSprite_.reset();
+	tutorialSprite_.reset();
+	spiritGaugeBackSprite_.reset();
+	spiritGaugeFillSprite_.reset();
+	scoreDigitSprites_.clear();
 	deathHandStamps_.clear();
 	gameOverTintSprite_.reset();
 	gameOverFadeSprite_.reset();
@@ -202,6 +226,12 @@ void GamePlayScene::Update() {
 	Math::Vector3 cameraRotation = camera_->GetRotate();
 	if (ImGui::DragFloat3("Rotation", &cameraRotation.x, 0.01f)) { camera_->SetRotate(cameraRotation); }
 	ImGui::End();
+
+	ImGui::Begin("Game Score");
+	ImGui::Text("Distance: %.0f", courseManager_->GetRunDistance());
+	ImGui::Text("Souls: %d", soulCollectedCount_);
+	ImGui::Text("Score: %d", score_);
+	ImGui::End();
 #endif
 	if (gameOverPhase_ != GameOverPhase::None) {
 		UpdateGameOverSequence();
@@ -217,6 +247,14 @@ void GamePlayScene::Update() {
 
 	// カメラ演出が終わるまではコースと障害物を動かさない。
 	if (!gameplayStarted_) {
+		UpdateGameUi();
+		// 説明を読んでいる間は開始演出を進めず、読み終わってからカメラを動かす。
+		if (tutorialActive_) {
+			camera_->Update();
+			player_->UpdateTransformOnly();
+			for (const auto& sprite : hpSprites_) { sprite->Update(); }
+			return;
+		}
 		UpdateOpeningCamera();
 		UpdateStartRunEffect();
 		camera_->Update();
@@ -233,9 +271,18 @@ void GamePlayScene::Update() {
 	// カメラ・プレイヤー・コース・障害物を順番に更新する。
 	camera_->Update();
 	player_->Update();
+	player_->UpdateSpirit(kDeltaTime);
+	if (player_->IsDead()) {
+		StartGameOverSequence();
+		return;
+	}
 	UpdateGhost();
 	courseManager_->Update(camera_->GetTranslate().z);
+	// 暫定スコア: 進んだ距離 1 ごとに1点、魂1個につき10点。
+	score_ = static_cast<int>(courseManager_->GetRunDistance()) + soulCollectedCount_ * 10;
+	UpdateScoreUi();
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
+	itemManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), kDeltaTime);
 	// 無敵中でなければ障害物との当たり判定を行う。
 	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
@@ -244,8 +291,28 @@ void GamePlayScene::Update() {
 			return;
 		}
 	}
+	// 魂は霊力を回復し、回復お札は失ったお札を1枚戻す。
+	switch (itemManager_->CheckCollection(player_->GetPosition())) {
+	case ItemType::MiniSoul:
+		// 小さな魂はコイン感覚で連続取得するため、回復量は控えめにする。
+		player_->RecoverSpirit(4.0f);
+		++soulCollectedCount_;
+		score_ = static_cast<int>(courseManager_->GetRunDistance()) + soulCollectedCount_ * 10;
+		UpdateScoreUi();
+		break;
+	case ItemType::HealOhuda:
+		if (player_->GetHp() < 3) {
+			player_->RecoverHp();
+		} else {
+			player_->RecoverSpirit(45.0f);
+		}
+		break;
+	case ItemType::None:
+		break;
+	}
 	// HP表示とゲーム開始時の画面開放演出を更新する。
 	for (const auto& sprite : hpSprites_) { sprite->Update(); }
+	UpdateGameUi();
 	UpdateStartRunEffect();
 	UpdateSceneReveal();
 }
@@ -391,6 +458,84 @@ void GamePlayScene::InitializeSceneReveal() {
 	sceneRevealActive_ = true;
 	revealLeftSprite_->Update();
 	revealRightSprite_->Update();
+}
+
+void GamePlayScene::InitializeGameUi() {
+	tutorialSprite_ = std::make_unique<Sprite>();
+	tutorialSprite_->Initialize(SpriteCommon::GetInstance(), "resources/tutorial.png");
+	tutorialSprite_->SetPosition({ 640.0f, 360.0f });
+	tutorialSprite_->SetSize({ 800.0f, 360.0f });
+	tutorialSprite_->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+	tutorialSprite_->Update();
+
+	// 灰色の背景の上へ、左端を固定した霊力の中身を重ねる。
+	spiritGaugeBackSprite_ = std::make_unique<Sprite>();
+	spiritGaugeBackSprite_->Initialize(SpriteCommon::GetInstance(), "resources/gageOut.png");
+	spiritGaugeBackSprite_->SetAnchorPoint({ 0.0f, 0.5f });
+	spiritGaugeBackSprite_->SetPosition({ 35.0f, 130.0f });
+	spiritGaugeBackSprite_->SetSize({ 360.0f, 45.0f });
+	spiritGaugeBackSprite_->Update();
+
+	spiritGaugeFillSprite_ = std::make_unique<Sprite>();
+	spiritGaugeFillSprite_->Initialize(SpriteCommon::GetInstance(), "resources/gageIn.png");
+	spiritGaugeFillSprite_->SetAnchorPoint({ 0.0f, 0.5f });
+	spiritGaugeFillSprite_->SetPosition({ 45.0f, 130.0f });
+	spiritGaugeFillSprite_->SetSize({ kSpiritGaugeFillWidth, 35.0f });
+	spiritGaugeFillSprite_->Update();
+
+	tutorialFadeTime_ = 0.0f;
+	tutorialActive_ = true;
+}
+
+void GamePlayScene::UpdateGameUi() {
+	const float spiritRatio = player_ ? player_->GetSpiritRatio() : 0.0f;
+	spiritGaugeFillSprite_->SetSize({ kSpiritGaugeFillWidth * spiritRatio, 35.0f });
+	spiritGaugeBackSprite_->Update();
+	spiritGaugeFillSprite_->Update();
+
+	if (!tutorialActive_) {
+		return;
+	}
+
+	tutorialFadeTime_ += kDeltaTime;
+	const float fadeTime = tutorialFadeTime_ - kTutorialHoldDuration;
+	const float alpha = 1.0f - std::clamp(fadeTime / kTutorialFadeDuration, 0.0f, 1.0f);
+	tutorialSprite_->SetColor({ 1.0f, 1.0f, 1.0f, alpha });
+	tutorialSprite_->Update();
+	if (alpha <= 0.0f) {
+		tutorialActive_ = false;
+	}
+}
+
+void GamePlayScene::InitializeScoreUi() {
+	// number.pngは横10分割（0〜9）、1文字100pxのスプライトシート。
+	constexpr int kScoreDigitCount = 6;
+	constexpr float kDigitSize = 48.0f;
+	constexpr float kDigitStartX = 1000.0f;
+	constexpr float kDigitY = 55.0f;
+
+	scoreDigitSprites_.reserve(kScoreDigitCount);
+	for (int i = 0; i < kScoreDigitCount; ++i) {
+		auto digit = std::make_unique<Sprite>();
+		digit->Initialize(SpriteCommon::GetInstance(), "resources/number.png");
+		digit->SetPosition({ kDigitStartX + kDigitSize * i, kDigitY });
+		digit->SetSize({ kDigitSize, kDigitSize });
+		digit->SetTextureSize({ 100.0f, 100.0f });
+		digit->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
+		scoreDigitSprites_.push_back(std::move(digit));
+	}
+	UpdateScoreUi();
+}
+
+void GamePlayScene::UpdateScoreUi() {
+	int divisor = 100000;
+	for (const auto& sprite : scoreDigitSprites_) {
+		const int digit = (score_ / divisor) % 10;
+		sprite->SetTextureLeftTop({ static_cast<float>(digit * 100), 0.0f });
+		sprite->SetTextureSize({ 100.0f, 100.0f });
+		sprite->Update();
+		divisor /= 10;
+	}
 }
 
 void GamePlayScene::UpdateSceneReveal() {
@@ -590,6 +735,7 @@ void GamePlayScene::Draw() {
 	courseManager_->Draw();
 	if (gameplayStarted_) {
 		obstacleManager_->Draw();
+		itemManager_->Draw();
 	}
 	if (ghostObject_) {
 		ghostObject_->Draw();
@@ -611,6 +757,16 @@ void GamePlayScene::Draw() {
 	if (sceneRevealActive_) {
 		revealLeftSprite_->Draw(commandList);
 		revealRightSprite_->Draw(commandList);
+	}
+	if (gameplayStarted_) {
+		spiritGaugeBackSprite_->Draw(commandList);
+		spiritGaugeFillSprite_->Draw(commandList);
+		for (const auto& digit : scoreDigitSprites_) {
+			digit->Draw(commandList);
+		}
+	}
+	if (tutorialActive_) {
+		tutorialSprite_->Draw(commandList);
 	}
 	if (gameOverPhase_ != GameOverPhase::None) {
 		gameOverTintSprite_->Draw(commandList);

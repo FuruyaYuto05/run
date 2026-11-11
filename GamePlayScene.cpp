@@ -13,7 +13,9 @@
 #include "ItemManager.h"
 #include "ForestManager.h"
 #include "GameOverScene.h"
+#include "TitleScene.h"
 #include "SceneManager.h"
+#include "Input.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -125,6 +127,7 @@ void GamePlayScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/tutorial.png");
 	TextureManager::GetInstance()->LoadTexture("resources/gageIn.png");
 	TextureManager::GetInstance()->LoadTexture("resources/gageOut.png");
+	TextureManager::GetInstance()->LoadTexture("resources/forTitle.png");
 	TextureManager::GetInstance()->LoadTexture("resources/number.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
@@ -214,6 +217,7 @@ void GamePlayScene::Finalize() {
 	spiritGaugeBackSprite_.reset();
 	spiritGaugeFillSprite_.reset();
 	nightTintSprite_.reset();
+	returnTitleSprite_.reset();
 	scoreDigitSprites_.clear();
 	deathHandStamps_.clear();
 	gameOverTintSprite_.reset();
@@ -240,6 +244,11 @@ void GamePlayScene::Update() {
 	ImGui::Text("Score: %d", score_);
 	ImGui::End();
 #endif
+	// 体験版では、いつでもTキーでタイトルへ戻れるようにする。
+	if (input_->Pushkey(DIK_T)) {
+		sceneManager_->SetNextScene(std::make_unique<TitleScene>());
+		return;
+	}
 	if (gameOverPhase_ != GameOverPhase::None) {
 		UpdateGameOverSequence();
 		return;
@@ -476,6 +485,14 @@ void GamePlayScene::InitializeGameUi() {
 	nightTintSprite_->SetSize({ 1280.0f, 720.0f });
 	nightTintSprite_->SetColor({ 0.03f, 0.08f, 0.16f, 0.28f });
 	nightTintSprite_->Update();
+
+	// スコアの下に置き、ゲーム中でもタイトルへ戻れることを知らせる。
+	returnTitleSprite_ = std::make_unique<Sprite>();
+	returnTitleSprite_->Initialize(SpriteCommon::GetInstance(), "resources/forTitle.png");
+	returnTitleSprite_->SetPosition({ 1165.0f, 145.0f });
+	returnTitleSprite_->SetSize({ 180.0f, 40.0f });
+	returnTitleSprite_->SetColor({ 0.80f, 0.88f, 0.92f, 0.80f });
+	returnTitleSprite_->Update();
 
 	tutorialSprite_ = std::make_unique<Sprite>();
 	tutorialSprite_->Initialize(SpriteCommon::GetInstance(), "resources/tutorial.png");
@@ -784,6 +801,7 @@ void GamePlayScene::Draw() {
 		for (const auto& digit : scoreDigitSprites_) {
 			digit->Draw(commandList);
 		}
+		returnTitleSprite_->Draw(commandList);
 	}
 	if (tutorialActive_) {
 		tutorialSprite_->Draw(commandList);

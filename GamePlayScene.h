@@ -77,6 +77,7 @@ private:
 	std::unique_ptr<Sprite> spiritGaugeBackSprite_;
 	std::unique_ptr<Sprite> spiritGaugeFillSprite_;
 	std::unique_ptr<Sprite> nightTintSprite_;
+	std::unique_ptr<Sprite> returnTitleSprite_;
 	std::vector<std::unique_ptr<Sprite>> scoreDigitSprites_;
 	std::unique_ptr<Sprite> gameOverTintSprite_;
 	std::unique_ptr<Sprite> gameOverFadeSprite_;

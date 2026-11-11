@@ -43,7 +43,7 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	object3d_->Initialize(object3dCommon);
 	object3d_->SetModel("human/Mannequin_Large.glb");
 	// Mannequin_Largeは以前のモデルより約2.4倍大きいため縮小する。
-	object3d_->SetScale({ 0.4f, 0.4f, 0.4f });
+	object3d_->SetScale({ 0.2f, 0.2f, 0.2f });
 	object3d_->SetTranslate({ 0, 0, 0 });
 	// ゲームの進行方向へ正面を向ける。
 	object3d_->SetRotate({ 0.0f, 0.0f, 0.0f });

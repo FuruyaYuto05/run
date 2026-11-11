@@ -15,6 +15,7 @@ class Player;
 class CourseManager;
 class ObstacleManager;
 class ItemManager;
+class ForestManager;
 
 class GamePlayScene : public BaseScene {
 public:
@@ -64,6 +65,7 @@ private:
 	std::unique_ptr<CourseManager> courseManager_;
 	std::unique_ptr<ObstacleManager> obstacleManager_;
 	std::unique_ptr<ItemManager> itemManager_;
+	std::unique_ptr<ForestManager> forestManager_;
 	Model* animatedModel_ = nullptr;
 	Model* ghostModel_ = nullptr;
 	std::vector<std::unique_ptr<Sprite>> hpSprites_;
@@ -74,6 +76,7 @@ private:
 	std::unique_ptr<Sprite> tutorialSprite_;
 	std::unique_ptr<Sprite> spiritGaugeBackSprite_;
 	std::unique_ptr<Sprite> spiritGaugeFillSprite_;
+	std::unique_ptr<Sprite> nightTintSprite_;
 	std::vector<std::unique_ptr<Sprite>> scoreDigitSprites_;
 	std::unique_ptr<Sprite> gameOverTintSprite_;
 	std::unique_ptr<Sprite> gameOverFadeSprite_;

@@ -160,6 +160,7 @@
     <ClCompile Include="D3DResourceLeakChecker.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="Framework.cpp" />
+	<ClCompile Include="ForestManager.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameOverScene.cpp" />
     <ClCompile Include="GamePlayScene.cpp" />
@@ -269,6 +270,7 @@
     <ClInclude Include="D3DResourceLeakChecker.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="Framework.h" />
+	<ClInclude Include="ForestManager.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameOverScene.h" />
     <ClInclude Include="GamePlayScene.h" />
@@ -396,6 +398,18 @@
 	<None Include="resources\healOhudaC.png">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  <TargetPath>resources\healOhudaC.png</TargetPath>
+	</None>
+	<None Include="resources\tree.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\tree.obj</TargetPath>
+	</None>
+	<None Include="resources\tree.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\tree.mtl</TargetPath>
+	</None>
+	<None Include="resources\treeC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\treeC.png</TargetPath>
 	</None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />

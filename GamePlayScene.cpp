@@ -11,6 +11,7 @@
 #include "CourseManager.h"
 #include "ObstacleManager.h"
 #include "ItemManager.h"
+#include "ForestManager.h"
 #include "GameOverScene.h"
 #include "SceneManager.h"
 #include <algorithm>
@@ -149,6 +150,7 @@ void GamePlayScene::Initialize() {
 	ModelManager::GetInstance()->LoadModel("maruta.obj");
 	ModelManager::GetInstance()->LoadModel("miniSoul.obj");
 	ModelManager::GetInstance()->LoadModel("healOhuda.obj");
+	ModelManager::GetInstance()->LoadModel("tree.obj");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
 	ghostModel_ = ModelManager::GetInstance()->FindModel("Ghost.gltf");
 	// ゲーム内の各管理オブジェクトを生成する。
@@ -167,6 +169,8 @@ void GamePlayScene::Initialize() {
 	obstacleManager_->Initialize(object3dCommon_);
 	itemManager_ = std::make_unique<ItemManager>();
 	itemManager_->Initialize(object3dCommon_);
+	forestManager_ = std::make_unique<ForestManager>();
+	forestManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
 	deathAnimation_ = LoadAnimationFile("resources/human", "Standing Death Forward 01.fbx");
 	ghostAnimation_ = LoadAnimationFile("resources", "Ghost.gltf", "Fast_Flying");
@@ -193,12 +197,14 @@ void GamePlayScene::Finalize() {
 	courseManager_->Finalize();
 	obstacleManager_->Finalize();
 	itemManager_->Finalize();
+	forestManager_->Finalize();
 	player_.reset();
 	ghostObject_.reset();
 	ghostModel_ = nullptr;
 	courseManager_.reset();
 	obstacleManager_.reset();
 	itemManager_.reset();
+	forestManager_.reset();
 	hpSprites_.clear();
 	startRunSprites_.clear();
 	startRunAppearRanks_.clear();
@@ -207,6 +213,7 @@ void GamePlayScene::Finalize() {
 	tutorialSprite_.reset();
 	spiritGaugeBackSprite_.reset();
 	spiritGaugeFillSprite_.reset();
+	nightTintSprite_.reset();
 	scoreDigitSprites_.clear();
 	deathHandStamps_.clear();
 	gameOverTintSprite_.reset();
@@ -283,6 +290,7 @@ void GamePlayScene::Update() {
 	UpdateScoreUi();
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
 	itemManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), kDeltaTime);
+	forestManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
 	// 無敵中でなければ障害物との当たり判定を行う。
 	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
@@ -461,6 +469,14 @@ void GamePlayScene::InitializeSceneReveal() {
 }
 
 void GamePlayScene::InitializeGameUi() {
+	// 3Dを描いたあとにだけ重ねる夜色。UIはこのあとに描くため、読みやすさは保つ。
+	nightTintSprite_ = std::make_unique<Sprite>();
+	nightTintSprite_->Initialize(SpriteCommon::GetInstance(), "resources/human/white.png");
+	nightTintSprite_->SetPosition({ 640.0f, 360.0f });
+	nightTintSprite_->SetSize({ 1280.0f, 720.0f });
+	nightTintSprite_->SetColor({ 0.03f, 0.08f, 0.16f, 0.28f });
+	nightTintSprite_->Update();
+
 	tutorialSprite_ = std::make_unique<Sprite>();
 	tutorialSprite_->Initialize(SpriteCommon::GetInstance(), "resources/tutorial.png");
 	tutorialSprite_->SetPosition({ 640.0f, 360.0f });
@@ -733,6 +749,7 @@ float GamePlayScene::NextDeathHandRandom01() {
 void GamePlayScene::Draw() {
 	// 3Dゲーム画面を描いた後にHPと遷移用スプライトを重ねる。
 	courseManager_->Draw();
+	forestManager_->Draw();
 	if (gameplayStarted_) {
 		obstacleManager_->Draw();
 		itemManager_->Draw();
@@ -744,6 +761,9 @@ void GamePlayScene::Draw() {
 
 	ID3D12GraphicsCommandList* commandList = Object3dCommon::GetInstance()->GetDxCommon()->GetCommandList();
 	SpriteCommon::GetInstance()->PreDraw(commandList);
+	if (gameplayStarted_) {
+		nightTintSprite_->Draw(commandList);
+	}
 	if (gameplayStarted_) {
 		for (int i = 0; i < player_->GetHp(); ++i) {
 			hpSprites_[i]->Draw(commandList);

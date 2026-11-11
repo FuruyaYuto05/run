@@ -59,11 +59,11 @@ void Object3d::CreateDirectionalLightData() {
     // 書き込むためのアドレスを取得
     directionalLightResource->Map(0, nullptr, reinterpret_cast<void**>(&directionalLightData));
 
-    // デフォルト値の設定（白、下向き、輝度1.0など）
-    directionalLightData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
-    directionalLightData->direction = { 0.5f, -1.0f, 0.5f };
-    directionalLightData->intensity = 1.0f;
-    directionalLightData->ambientIntensity = 0.25f;
+    // 夜の参道用。白く強い光ではなく、弱い青白い月明かりにする。
+    directionalLightData->color = { 0.48f, 0.60f, 0.82f, 1.0f };
+    directionalLightData->direction = { 0.35f, -1.0f, 0.20f };
+    directionalLightData->intensity = 0.58f;
+    directionalLightData->ambientIntensity = 0.08f;
     directionalLightData->padding[0] = 0.0f;
     directionalLightData->padding[1] = 0.0f;
     directionalLightData->padding[2] = 0.0f;

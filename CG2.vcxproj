@@ -157,6 +157,7 @@
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="BaseScene.cpp" />
     <ClCompile Include="Camera.cpp" />
+	<ClCompile Include="CollectionScene.cpp" />
     <ClCompile Include="D3DResourceLeakChecker.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="Framework.cpp" />
@@ -267,6 +268,7 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="BaseScene.h" />
     <ClInclude Include="Camera.h" />
+	<ClInclude Include="CollectionScene.h" />
     <ClInclude Include="D3DResourceLeakChecker.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="Framework.h" />
@@ -414,6 +416,14 @@
 	<None Include="resources\forTitle.png">
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  <TargetPath>resources\forTitle.png</TargetPath>
+	</None>
+	<None Include="resources\title\collection.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\title\collection.png</TargetPath>
+	</None>
+	<None Include="resources\collection\achievementBookClosed.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\collection\achievementBookClosed.png</TargetPath>
 	</None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />

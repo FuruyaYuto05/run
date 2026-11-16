@@ -9,8 +9,7 @@
 #include "TextureManager.h"
 #include "Player.h"
 #include "CourseManager.h"
-#include "ObstacleManager.h"
-#include "ItemManager.h"
+#include "CoursePatternManager.h"
 #include "ForestManager.h"
 #include "GameOverScene.h"
 #include "TitleScene.h"
@@ -171,10 +170,8 @@ void GamePlayScene::Initialize() {
 	ghostObject_->SetTranslate(kGhostOpeningPosition);
 	courseManager_ = std::make_unique<CourseManager>();
 	courseManager_->Initialize(object3dCommon_);
-	obstacleManager_ = std::make_unique<ObstacleManager>();
-	obstacleManager_->Initialize(object3dCommon_);
-	itemManager_ = std::make_unique<ItemManager>();
-	itemManager_->Initialize(object3dCommon_);
+	coursePatternManager_ = std::make_unique<CoursePatternManager>();
+	coursePatternManager_->Initialize(object3dCommon_);
 	forestManager_ = std::make_unique<ForestManager>();
 	forestManager_->Initialize(object3dCommon_);
 	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
@@ -184,8 +181,7 @@ void GamePlayScene::Initialize() {
 	player_->Update();
 	ghostObject_->Update();
 	courseManager_->UpdateTransformOnly();
-	obstacleManager_->Update(kGameplayCameraPosition.z, 0.0f);
-	itemManager_->Update(kGameplayCameraPosition.z, 0.0f, kDeltaTime);
+	coursePatternManager_->Update(kGameplayCameraPosition.z, 0.0f, kDeltaTime);
 	openingCameraTime_ = 0.0f;
 	gameplayStarted_ = false;
 	soulCollectedCount_ = 0;
@@ -201,15 +197,13 @@ void GamePlayScene::Finalize() {
 	// シーンで生成したオブジェクトと音声を解放する。
 	player_->Finalize();
 	courseManager_->Finalize();
-	obstacleManager_->Finalize();
-	itemManager_->Finalize();
+	coursePatternManager_->Finalize();
 	forestManager_->Finalize();
 	player_.reset();
 	ghostObject_.reset();
 	ghostModel_ = nullptr;
 	courseManager_.reset();
-	obstacleManager_.reset();
-	itemManager_.reset();
+	coursePatternManager_.reset();
 	forestManager_.reset();
 	hpSprites_.clear();
 	startRunSprites_.clear();
@@ -303,12 +297,11 @@ void GamePlayScene::Update() {
 	// 暫定スコア: 進んだ距離 1 ごとに1点、魂1個につき10点。
 	score_ = static_cast<int>(courseManager_->GetRunDistance()) + soulCollectedCount_ * 10;
 	UpdateScoreUi();
-	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
-	itemManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), kDeltaTime);
+	coursePatternManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), kDeltaTime);
 	forestManager_->Update(
 		camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), courseManager_->GetRunDistance());
 	// 無敵中でなければ障害物との当たり判定を行う。
-	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
+	if (!player_->IsInvincible() && coursePatternManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
 		if (player_->IsDead()) {
 			StartGameOverSequence();
@@ -316,7 +309,7 @@ void GamePlayScene::Update() {
 		}
 	}
 	// 魂は霊力を回復し、回復お札は失ったお札を1枚戻す。
-	switch (itemManager_->CheckCollection(player_->GetPosition())) {
+	switch (coursePatternManager_->CheckCollection(player_->GetPosition())) {
 	case ItemType::MiniSoul:
 		// 小さな魂はコイン感覚で連続取得するため、回復量は控えめにする。
 		player_->RecoverSpirit(4.0f);
@@ -777,8 +770,7 @@ void GamePlayScene::Draw() {
 	courseManager_->Draw();
 	forestManager_->Draw();
 	if (gameplayStarted_) {
-		obstacleManager_->Draw();
-		itemManager_->Draw();
+		coursePatternManager_->Draw();
 	}
 	if (ghostObject_) {
 		ghostObject_->Draw();

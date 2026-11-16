@@ -185,6 +185,7 @@
     <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="ParticleManager.cpp" />
     <ClCompile Include="CourseManager.cpp" />
+	<ClCompile Include="CoursePatternManager.cpp" />
     <ClCompile Include="CourseSegment.cpp" />
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="ObstacleManager.cpp" />
@@ -292,6 +293,7 @@
     <ClInclude Include="ParticleEmitter.h" />
     <ClInclude Include="ParticleManager.h" />
     <ClInclude Include="CourseManager.h" />
+	<ClInclude Include="CoursePatternManager.h" />
     <ClInclude Include="CourseSegment.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="ObstacleManager.h" />

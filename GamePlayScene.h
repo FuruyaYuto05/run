@@ -13,8 +13,7 @@ class Model;
 class Sprite;
 class Player;
 class CourseManager;
-class ObstacleManager;
-class ItemManager;
+class CoursePatternManager;
 class ForestManager;
 
 class GamePlayScene : public BaseScene {
@@ -63,8 +62,7 @@ private:
 	std::unique_ptr<Player> player_;
 	std::unique_ptr<Object3d> ghostObject_;
 	std::unique_ptr<CourseManager> courseManager_;
-	std::unique_ptr<ObstacleManager> obstacleManager_;
-	std::unique_ptr<ItemManager> itemManager_;
+	std::unique_ptr<CoursePatternManager> coursePatternManager_;
 	std::unique_ptr<ForestManager> forestManager_;
 	Model* animatedModel_ = nullptr;
 	Model* ghostModel_ = nullptr;

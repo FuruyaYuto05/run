@@ -78,6 +78,9 @@
     <ClCompile Include="CourseManager.cpp">
       <Filter>Game\Course</Filter>
     </ClCompile>
+	<ClCompile Include="CoursePatternManager.cpp">
+	  <Filter>Game\Course</Filter>
+	</ClCompile>
     <ClCompile Include="CourseSegment.cpp">
       <Filter>Game\Course</Filter>
     </ClCompile>
@@ -322,6 +325,9 @@
     <ClInclude Include="CourseManager.h">
       <Filter>Game\Course</Filter>
     </ClInclude>
+	<ClInclude Include="CoursePatternManager.h">
+	  <Filter>Game\Course</Filter>
+	</ClInclude>
     <ClInclude Include="StringUtility.h">
       <Filter>Engine\Utility</Filter>
     </ClInclude>

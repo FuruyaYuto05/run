@@ -19,8 +19,9 @@ void Obstacle::ConfigureModel() {
 		object3d_->SetModel("maruta.obj");
 		object3d_->SetScale({ 0.55f, 0.55f, 0.55f });
 	} else {
-		object3d_->SetModel("tyoutin.obj");
-		object3d_->SetScale({ 0.65f, 0.65f, 0.65f });
+		// 森の参道に置く障害物は、沈み灯籠のモデルへ差し替える。
+		object3d_->SetModel("building/k_ryu_shizumi_tourou.glb");
+		object3d_->SetScale({ 0.80f, 0.80f, 0.80f });
 	}
 }
 

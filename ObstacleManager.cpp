@@ -8,8 +8,8 @@ constexpr int kObstacleCount = 5;
 constexpr float kFirstObstacleZ = 20.0f;
 constexpr float kMinObstacleSpacing = 12.0f;
 constexpr float kMaxObstacleSpacing = 19.0f;
-// tyoutin.objは原点から下へ1mあり、丸太は中心原点なので高さを分ける。
-constexpr float kLanternY = 0.65f;
+// 沈み灯籠は足元が原点のため、地面の高さにそのまま置く。
+constexpr float kLanternY = 0.0f;
 constexpr float kLogY = 0.33f;
 constexpr float kRecycleOffset = 2.0f;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };

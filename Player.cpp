@@ -13,11 +13,15 @@ constexpr int kLaneCount = 3;
 constexpr float kLanePositions[] = { -2.0f, 0.0f, 2.0f };
 constexpr int kInvincibleFrames = 120;
 constexpr int kBlinkIntervalFrames = 6;
-constexpr int kInitialHp = 3;
+// リザルト演出を確認しやすくするため、いったん開始時HPを1枚にする。
+constexpr int kInitialHp = 1;
 constexpr float kMaxSpirit = 100.0f;
 // 魂を取り続けないと霊力がじわじわ尽きる速度。
 constexpr float kSpiritDrainPerSecond = 6.0f;
 constexpr float kCollisionSpiritDamage = 35.0f;
+// 背景配置の確認中は、障害物・時間経過のどちらでも倒れないようにする。
+// 調整が終わったら false に戻す。
+constexpr bool kTemporaryNoDamageForLayoutEditing = true;
 constexpr float kGroundY = 0.0f;
 constexpr float kJumpVelocity = 0.22f;
 constexpr float kGravity = 0.012f;
@@ -135,6 +139,9 @@ void Player::Draw() {
 }
 
 void Player::OnCollision() {
+	if (kTemporaryNoDamageForLayoutEditing) {
+		return;
+	}
 	if (!IsInvincible()) {
 		ReduceSpirit(kCollisionSpiritDamage);
 		invincibleTimer_ = kInvincibleFrames;
@@ -143,6 +150,9 @@ void Player::OnCollision() {
 }
 
 void Player::UpdateSpirit(float deltaSeconds) {
+	if (kTemporaryNoDamageForLayoutEditing) {
+		return;
+	}
 	ReduceSpirit(kSpiritDrainPerSecond * deltaSeconds);
 }
 

@@ -149,11 +149,14 @@ void GamePlayScene::Initialize() {
 	ModelManager::GetInstance()->LoadModel("human/Mannequin_Large.glb");
 	ModelManager::GetInstance()->LoadModel("Ghost.gltf");
 	ModelManager::GetInstance()->LoadModel("road.obj");
-	ModelManager::GetInstance()->LoadModel("tyoutin.obj");
+	ModelManager::GetInstance()->LoadModel("building/k_ryu_shizumi_tourou.glb");
 	ModelManager::GetInstance()->LoadModel("maruta.obj");
 	ModelManager::GetInstance()->LoadModel("miniSoul.obj");
 	ModelManager::GetInstance()->LoadModel("healOhuda.obj");
 	ModelManager::GetInstance()->LoadModel("tree.obj");
+	ModelManager::GetInstance()->LoadModel("building/k_machiya_a.glb");
+	ModelManager::GetInstance()->LoadModel("building/k_minato_banya.glb");
+	ModelManager::GetInstance()->LoadModel("building/k_v_ne_torii.glb");
 	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
 	ghostModel_ = ModelManager::GetInstance()->FindModel("Ghost.gltf");
 	// ゲーム内の各管理オブジェクトを生成する。
@@ -268,6 +271,8 @@ void GamePlayScene::Update() {
 		if (tutorialActive_) {
 			camera_->Update();
 			player_->UpdateTransformOnly();
+			// 演出中も森の背景を最初から準備し、視点切り替え時の出現を防ぐ。
+			forestManager_->Update(camera_->GetTranslate().z, 0.0f, 0.0f);
 			for (const auto& sprite : hpSprites_) { sprite->Update(); }
 			return;
 		}
@@ -279,6 +284,7 @@ void GamePlayScene::Update() {
 		UpdateGhost();
 		// 床は流すが、演出中は再配置を止めて画面内で消えるのを防ぐ。
 		courseManager_->Update(camera_->GetTranslate().z, false);
+		forestManager_->Update(camera_->GetTranslate().z, 0.0f, 0.0f);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
 		UpdateSceneReveal();
 		return;
@@ -299,7 +305,8 @@ void GamePlayScene::Update() {
 	UpdateScoreUi();
 	obstacleManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
 	itemManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), kDeltaTime);
-	forestManager_->Update(camera_->GetTranslate().z, courseManager_->GetMoveSpeed());
+	forestManager_->Update(
+		camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), courseManager_->GetRunDistance());
 	// 無敵中でなければ障害物との当たり判定を行う。
 	if (!player_->IsInvincible() && obstacleManager_->CheckCollision(player_->GetPosition())) {
 		player_->OnCollision();
@@ -730,7 +737,9 @@ void GamePlayScene::UpdateGameOverSequence() {
 		blackAlpha = SmoothStep(t);
 		UpdateDeathHands(kDeathHandCoverDuration);
 		if (t >= 1.0f) {
-			sceneManager_->SetNextScene(std::make_unique<GameOverScene>());
+			// 走行中に集めた記録をリザルト画面へ渡す。
+			sceneManager_->SetNextScene(std::make_unique<GameOverScene>(
+				static_cast<int>(courseManager_->GetRunDistance()), soulCollectedCount_, score_));
 		}
 		break;
 	}
@@ -778,9 +787,8 @@ void GamePlayScene::Draw() {
 
 	ID3D12GraphicsCommandList* commandList = Object3dCommon::GetInstance()->GetDxCommon()->GetCommandList();
 	SpriteCommon::GetInstance()->PreDraw(commandList);
-	if (gameplayStarted_) {
-		nightTintSprite_->Draw(commandList);
-	}
+	// オープニングから同じ夜色を重ね、操作開始時だけ急に暗くならないようにする。
+	nightTintSprite_->Draw(commandList);
 	if (gameplayStarted_) {
 		for (int i = 0; i < player_->GetHp(); ++i) {
 			hpSprites_[i]->Draw(commandList);

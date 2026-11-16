@@ -425,6 +425,54 @@
 	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 	  <TargetPath>resources\collection\achievementBookClosed.png</TargetPath>
 	</None>
+	<None Include="resources\result\resultOfuda.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultOfuda.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultDistance.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultDistance.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultSouls.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultSouls.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultScore.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultScore.png</TargetPath>
+	</None>
+	<None Include="resources\result\Retry.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\Retry.png</TargetPath>
+	</None>
+	<None Include="resources\result\toTitle.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\toTitle.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultNewRecord.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultNewRecord.png</TargetPath>
+	</None>
+	<None Include="resources\result\collect1.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\collect1.png</TargetPath>
+	</None>
+	<None Include="resources\building\k_ryu_shizumi_tourou.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_ryu_shizumi_tourou.glb</TargetPath>
+	</None>
+	<None Include="resources\building\k_machiya_a.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_machiya_a.glb</TargetPath>
+	</None>
+	<None Include="resources\building\k_minato_banya.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_minato_banya.glb</TargetPath>
+	</None>
+	<None Include="resources\building\k_v_ne_torii.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_v_ne_torii.glb</TargetPath>
+	</None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />
     <None Include="Skybox.hlsli" />

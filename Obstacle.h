@@ -25,9 +25,16 @@ public:
 	void SetPosition(const Math::Vector3& position);
 	void SetType(ObstacleType type);
 	ObstacleType GetType() const { return type_; }
+	// 横倒しになり切るまでは、立っている丸太に当たり判定を持たせない。
+	bool IsReadyForCollision() const;
 
 private:
 	std::unique_ptr<Object3d> object3d_;
 	ObstacleType type_ = ObstacleType::StoneLantern;
+	bool usesFallingLogEntrance_ = false;
+	bool logFallStarted_ = false;
+	float logFallProgress_ = 0.0f;
+	float logStandingSideX_ = 0.0f;
+	float logStandingRotationZ_ = 0.0f;
 	void ConfigureModel();
 };

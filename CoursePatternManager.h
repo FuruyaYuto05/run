@@ -28,7 +28,7 @@ private:
 	};
 
 	void AppendPattern();
-	void AddObstacle(ObstacleType type, int laneIndex, float z);
+	void AddObstacle(ObstacleType type, float x, float z);
 	void AddItem(ItemType type, int laneIndex, float z);
 	PatternType ChoosePattern();
 	int RandomLaneIndex();

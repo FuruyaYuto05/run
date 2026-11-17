@@ -79,6 +79,9 @@ void CoursePatternManager::Draw() {
 bool CoursePatternManager::CheckCollision(const Math::Vector3& playerPosition) const {
 	for (const auto& obstacle : obstacles_) {
 		const Math::Vector3& position = obstacle->GetPosition();
+		if (!obstacle->IsReadyForCollision()) {
+			continue;
+		}
 		const bool isLog = obstacle->GetType() == ObstacleType::Log;
 		if (isLog && playerPosition.y > kLogJumpClearHeight) {
 			continue;
@@ -127,7 +130,7 @@ void CoursePatternManager::AppendPattern() {
 		// 石灯籠はもっとも多い基本障害物。空いたレーンに魂を2個置く。
 		const int blockedLane = RandomLaneIndex();
 		const int rewardLane = RandomDifferentLane(blockedLane);
-		AddObstacle(ObstacleType::StoneLantern, blockedLane, z + 3.5f);
+		AddObstacle(ObstacleType::StoneLantern, kLanePositions[blockedLane], z + 3.5f);
 		AddItem(ItemType::MiniSoul, rewardLane, z + 6.0f);
 		AddItem(ItemType::MiniSoul, rewardLane, z + 6.0f + kSoulSpacing);
 		nextPatternZ_ += 14.0f;
@@ -135,7 +138,10 @@ void CoursePatternManager::AppendPattern() {
 	}
 	case PatternType::LogReward: {
 		// 低頻度の丸太。飛び越えた先に5個並べて、ジャンプする理由を作る。
-		AddObstacle(ObstacleType::Log, 1, z + 3.5f);
+		// 丸太は左右どちらかの道の外側で立たせ、近づくと中央へ倒す。
+		std::bernoulli_distribution sideDistribution(0.5);
+		const float standingSideX = sideDistribution(randomEngine_) ? -4.2f : 4.2f;
+		AddObstacle(ObstacleType::Log, standingSideX, z + 3.5f);
 		for (int i = 0; i < 5; ++i) {
 			AddItem(ItemType::MiniSoul, 1, z + 6.2f + kSoulSpacing * static_cast<float>(i));
 		}
@@ -147,7 +153,7 @@ void CoursePatternManager::AppendPattern() {
 		// 回復お札は障害物の奥、かつ魂の列とは異なるレーンにだけ置く。
 		const int blockedLane = RandomLaneIndex();
 		const int ofudaLane = RandomDifferentLane(blockedLane);
-		AddObstacle(ObstacleType::StoneLantern, blockedLane, z + 3.5f);
+		AddObstacle(ObstacleType::StoneLantern, kLanePositions[blockedLane], z + 3.5f);
 		AddItem(ItemType::HealOhuda, ofudaLane, z + 7.0f);
 		nextPatternZ_ += 15.0f;
 		break;
@@ -156,9 +162,9 @@ void CoursePatternManager::AppendPattern() {
 	previousPattern_ = pattern;
 }
 
-void CoursePatternManager::AddObstacle(ObstacleType type, int laneIndex, float z) {
+void CoursePatternManager::AddObstacle(ObstacleType type, float x, float z) {
 	auto obstacle = std::make_unique<Obstacle>();
-	obstacle->Initialize(object3dCommon_, { kLanePositions[laneIndex], ObstacleY(type), z }, type);
+	obstacle->Initialize(object3dCommon_, { x, ObstacleY(type), z }, type);
 	obstacle->Update();
 	obstacles_.push_back(std::move(obstacle));
 }

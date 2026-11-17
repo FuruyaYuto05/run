@@ -19,9 +19,8 @@ constexpr float kMaxSpirit = 100.0f;
 // 魂を取り続けないと霊力がじわじわ尽きる速度。
 constexpr float kSpiritDrainPerSecond = 6.0f;
 constexpr float kCollisionSpiritDamage = 35.0f;
-// 背景配置の確認中は、障害物・時間経過のどちらでも倒れないようにする。
-// 調整が終わったら false に戻す。
-constexpr bool kTemporaryNoDamageForLayoutEditing = true;
+// 配置確認用の無敵は解除し、障害物・時間経過とも通常どおりダメージを受ける。
+constexpr bool kTemporaryNoDamageForLayoutEditing = false;
 constexpr float kGroundY = 0.0f;
 constexpr float kJumpVelocity = 0.22f;
 constexpr float kGravity = 0.012f;

@@ -1,6 +1,7 @@
 #include "TitleScene.h"
 #include "Camera.h"
 #include "GamePlayScene.h"
+#include "CollectionScene.h"
 #include "Input.h"
 #include "SceneManager.h"
 #include "DirectXCommon.h"
@@ -28,9 +29,11 @@ constexpr float kLogoWidth = 850.0f;
 constexpr float kLogoHeight = 145.0f;
 constexpr float kMenuX = 640.0f;
 constexpr float kPlayY = 430.0f;
-constexpr float kExitY = 525.0f;
+constexpr float kCollectionY = 525.0f;
+constexpr float kExitY = 620.0f;
 constexpr float kMenuWidth = 320.0f;
 constexpr float kMenuHeight = 96.0f;
+constexpr float kCollectionHeight = 71.0f;
 constexpr float kPlaySlideStartX = 1500.0f;
 constexpr float kExitSlideStartX = -220.0f;
 constexpr float kPlaySlideDelay = 0.50f;
@@ -93,6 +96,7 @@ void TitleScene::Initialize() {
 	// タイトル画面で使用する画像を読み込む。
 	TextureManager::GetInstance()->LoadTexture("resources/title/title.png");
 	TextureManager::GetInstance()->LoadTexture("resources/title/start.png");
+	TextureManager::GetInstance()->LoadTexture("resources/title/collection.png");
 	TextureManager::GetInstance()->LoadTexture("resources/title/end.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	TextureManager::GetInstance()->LoadTexture("resources/scene/handL.png");
@@ -108,11 +112,17 @@ void TitleScene::Initialize() {
 	playSprite_ = std::make_unique<Sprite>();
 	playSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/start.png");
 
+	collectionSprite_ = std::make_unique<Sprite>();
+	collectionSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/collection.png");
+
 	exitSprite_ = std::make_unique<Sprite>();
 	exitSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/end.png");
 
 	playGlowSprite_ = std::make_unique<Sprite>();
 	playGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/start.png");
+
+	collectionGlowSprite_ = std::make_unique<Sprite>();
+	collectionGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/collection.png");
 
 	exitGlowSprite_ = std::make_unique<Sprite>();
 	exitGlowSprite_->Initialize(SpriteCommon::GetInstance(), "resources/title/end.png");
@@ -134,6 +144,7 @@ void TitleScene::Initialize() {
 	inactivityTime_ = 0.0f;
 	fadeAlpha_ = 0.0f;
 	restartFadingIn_ = false;
+	transitionTarget_ = TransitionTarget::Game;
 	previousEnterPressed_ = input_->Pushkey(DIK_RETURN);
 	previousUpPressed_ = input_->Pushkey(DIK_UP) || input_->Pushkey(DIK_W);
 	previousDownPressed_ = input_->Pushkey(DIK_DOWN) || input_->Pushkey(DIK_S);
@@ -147,9 +158,11 @@ void TitleScene::Finalize() {
 	camera_.reset();
 	handStamps_.clear();
 	playGlowSprite_.reset();
+	collectionGlowSprite_.reset();
 	exitGlowSprite_.reset();
 	fadeSprite_.reset();
 	playSprite_.reset();
+	collectionSprite_.reset();
 	exitSprite_.reset();
 	titleSprite_.reset();
 	shadowSprite_.reset();
@@ -247,7 +260,7 @@ void TitleScene::Update() {
 		break;
 	}
 	case Phase::Exit: {
-		// 手形で画面を覆ってからゲームシーンへ移る。
+		// 手形で画面を覆ってから、選ばれた画面へ移る。
 		const float logoT = std::clamp(phaseTime_ / kExitDuration, 0.0f, 1.0f);
 		const float eased = SmoothStep(logoT);
 		ApplyLogoTransform(1.0f + eased * 0.15f, -80.0f * eased, 0.0f, 1.0f - eased);
@@ -256,7 +269,11 @@ void TitleScene::Update() {
 			(phaseTime_ - kHandFadeStart) / kHandFadeDuration, 0.0f, 1.0f);
 		fadeAlpha_ = SmoothStep(blackT);
 		if (phaseTime_ >= kHandCoverDuration) {
-			sceneManager_->SetNextScene(std::make_unique<GamePlayScene>());
+			if (transitionTarget_ == TransitionTarget::Game) {
+				sceneManager_->SetNextScene(std::make_unique<GamePlayScene>());
+			} else {
+				sceneManager_->SetNextScene(std::make_unique<CollectionScene>());
+			}
 		}
 		break;
 	}
@@ -266,16 +283,35 @@ void TitleScene::Update() {
 	if (phase_ == Phase::Idle && menuReady_) {
 		if (upTriggered || downTriggered) {
 			inactivityTime_ = 0.0f;
-			selectedMenu_ = selectedMenu_ == MenuItem::Play ? MenuItem::Exit : MenuItem::Play;
+			if (upTriggered) {
+				switch (selectedMenu_) {
+				case MenuItem::Play: selectedMenu_ = MenuItem::Exit; break;
+				case MenuItem::Collection: selectedMenu_ = MenuItem::Play; break;
+				case MenuItem::Exit: selectedMenu_ = MenuItem::Collection; break;
+				}
+			} else {
+				switch (selectedMenu_) {
+				case MenuItem::Play: selectedMenu_ = MenuItem::Collection; break;
+				case MenuItem::Collection: selectedMenu_ = MenuItem::Exit; break;
+				case MenuItem::Exit: selectedMenu_ = MenuItem::Play; break;
+				}
+			}
 		}
 
 		if (enterTriggered) {
 			if (selectedMenu_ == MenuItem::Play) {
+				transitionTarget_ = TransitionTarget::Game;
 				phase_ = Phase::Exit;
 				phaseTime_ = 0.0f;
 				fadeAlpha_ = 0.0f;
 				ResetHandTransition();
-			} else {
+			} else if (selectedMenu_ == MenuItem::Collection) {
+				transitionTarget_ = TransitionTarget::Collection;
+				phase_ = Phase::Exit;
+				phaseTime_ = 0.0f;
+				fadeAlpha_ = 0.0f;
+				ResetHandTransition();
+			} else if (selectedMenu_ == MenuItem::Exit) {
 				PostQuitMessage(0);
 			}
 		}
@@ -290,8 +326,10 @@ void TitleScene::Update() {
 	shadowSprite_->Update();
 	titleSprite_->Update();
 	playGlowSprite_->Update();
+	collectionGlowSprite_->Update();
 	exitGlowSprite_->Update();
 	playSprite_->Update();
+	collectionSprite_->Update();
 	exitSprite_->Update();
 	fadeSprite_->SetColor({ 0.0f, 0.0f, 0.0f, fadeAlpha_ });
 	fadeSprite_->Update();
@@ -300,7 +338,7 @@ void TitleScene::Update() {
 	ImGui::Begin("Title Scene");
 	ImGui::Text("Press Enter to Start");
 	ImGui::Text("Animation Time: %.2f", totalTime_);
-	ImGui::Text("Selected: %s", selectedMenu_ == MenuItem::Play ? "START" : "END");
+	ImGui::Text("Selected: %s", selectedMenu_ == MenuItem::Play ? "START" : selectedMenu_ == MenuItem::Collection ? "COLLECTION" : "END");
 	ImGui::Text("Menu Input: %s", menuReady_ ? "Ready" : "Waiting for slide-in");
 	ImGui::Text("Auto Restart: %.1f / %.1f", inactivityTime_, kRestartWaitDuration);
 	ImGui::End();
@@ -448,6 +486,7 @@ void TitleScene::ApplyMenuTransform() {
 	}
 	const float pulse = 1.0f + std::sin(totalTime_ * 5.0f) * 0.04f;
 	const float playScale = menuReady_ && selectedMenu_ == MenuItem::Play ? pulse : 0.86f;
+	const float collectionScale = menuReady_ && selectedMenu_ == MenuItem::Collection ? pulse : 0.86f;
 	const float exitScale = menuReady_ && selectedMenu_ == MenuItem::Exit ? pulse : 0.86f;
 	const float glowWave = 0.5f + std::sin(totalTime_ * 6.0f) * 0.5f;
 	const float playGlow = menuReady_
@@ -455,6 +494,9 @@ void TitleScene::ApplyMenuTransform() {
 		: 0.0f;
 	const float exitGlow = menuReady_
 		? (selectedMenu_ == MenuItem::Exit ? 0.38f + glowWave * 0.28f : 0.12f)
+		: 0.0f;
+	const float collectionGlow = menuReady_
+		? (selectedMenu_ == MenuItem::Collection ? 0.38f + glowWave * 0.28f : 0.12f)
 		: 0.0f;
 
 	playSprite_->SetPosition({ playX, kPlayY });
@@ -472,6 +514,14 @@ void TitleScene::ApplyMenuTransform() {
 	exitGlowSprite_->SetPosition({ exitX, kExitY });
 	exitGlowSprite_->SetSize({ kMenuWidth * exitScale * 1.12f, kMenuHeight * exitScale * 1.18f });
 	exitGlowSprite_->SetColor({ 0.15f, 1.0f, 0.80f, exitGlow * menuAlpha });
+
+	// 実績画面は次の段階で接続するが、メニューとしては先に選べるようにする。
+	collectionSprite_->SetPosition({ kMenuX, kCollectionY });
+	collectionSprite_->SetSize({ kMenuWidth * collectionScale, kCollectionHeight * collectionScale });
+	collectionSprite_->SetColor({ 1.0f, 1.0f, 1.0f, SmoothStep(exitT) * menuAlpha });
+	collectionGlowSprite_->SetPosition({ kMenuX, kCollectionY });
+	collectionGlowSprite_->SetSize({ kMenuWidth * collectionScale * 1.12f, kCollectionHeight * collectionScale * 1.18f });
+	collectionGlowSprite_->SetColor({ 0.40f, 0.72f, 1.0f, collectionGlow * menuAlpha });
 }
 
 void TitleScene::ApplyLogoTransform(float scale, float yOffset, float rotationZ, float alpha, float rotationX) {
@@ -499,8 +549,10 @@ void TitleScene::Draw() {
 	shadowSprite_->Draw(commandList);
 	titleSprite_->Draw(commandList);
 	playGlowSprite_->Draw(commandList);
+	collectionGlowSprite_->Draw(commandList);
 	exitGlowSprite_->Draw(commandList);
 	playSprite_->Draw(commandList);
+	collectionSprite_->Draw(commandList);
 	exitSprite_->Draw(commandList);
 	for (const HandStamp& stamp : handStamps_) {
 		stamp.sprite->Draw(commandList);

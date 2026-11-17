@@ -78,6 +78,9 @@
     <ClCompile Include="CourseManager.cpp">
       <Filter>Game\Course</Filter>
     </ClCompile>
+	<ClCompile Include="CoursePatternManager.cpp">
+	  <Filter>Game\Course</Filter>
+	</ClCompile>
     <ClCompile Include="CourseSegment.cpp">
       <Filter>Game\Course</Filter>
     </ClCompile>
@@ -173,6 +176,18 @@
     </ClCompile>
     <ClCompile Include="StringUtility.cpp">
       <Filter>Engine\Utility</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ItemManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="CollectionScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="ForestManager.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -310,11 +325,26 @@
     <ClInclude Include="CourseManager.h">
       <Filter>Game\Course</Filter>
     </ClInclude>
+	<ClInclude Include="CoursePatternManager.h">
+	  <Filter>Game\Course</Filter>
+	</ClInclude>
     <ClInclude Include="StringUtility.h">
       <Filter>Engine\Utility</Filter>
     </ClInclude>
     <ClInclude Include="Game.h">
       <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ItemManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="CollectionScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="ForestManager.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -364,6 +394,51 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="resources\tyoutinC.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\healOhuda.mtl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\healOhuda.obj">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\healOhudaC.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\maruta.mtl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\maruta.obj">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\marutaC.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\miniSoul.mtl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\miniSoul.obj">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\miniSoulC.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\forTitle.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\tree.mtl">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\tree.obj">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\treeC.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\title\collection.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\collection\achievementBookClosed.png">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

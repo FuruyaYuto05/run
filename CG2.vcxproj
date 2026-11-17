@@ -157,14 +157,18 @@
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="BaseScene.cpp" />
     <ClCompile Include="Camera.cpp" />
+	<ClCompile Include="CollectionScene.cpp" />
     <ClCompile Include="D3DResourceLeakChecker.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="Framework.cpp" />
+	<ClCompile Include="ForestManager.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameOverScene.cpp" />
     <ClCompile Include="GamePlayScene.cpp" />
     <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="Input.cpp" />
+	<ClCompile Include="Item.cpp" />
+	<ClCompile Include="ItemManager.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="Sound.cpp" />
     <ClCompile Include="Logger.cpp" />
@@ -181,6 +185,7 @@
     <ClCompile Include="ParticleEmitter.cpp" />
     <ClCompile Include="ParticleManager.cpp" />
     <ClCompile Include="CourseManager.cpp" />
+	<ClCompile Include="CoursePatternManager.cpp" />
     <ClCompile Include="CourseSegment.cpp" />
     <ClCompile Include="Obstacle.cpp" />
     <ClCompile Include="ObstacleManager.cpp" />
@@ -264,14 +269,18 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="BaseScene.h" />
     <ClInclude Include="Camera.h" />
+	<ClInclude Include="CollectionScene.h" />
     <ClInclude Include="D3DResourceLeakChecker.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="Framework.h" />
+	<ClInclude Include="ForestManager.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameOverScene.h" />
     <ClInclude Include="GamePlayScene.h" />
     <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="Input.h" />
+	<ClInclude Include="Item.h" />
+	<ClInclude Include="ItemManager.h" />
     <ClInclude Include="SceneManager.h" />
     <ClInclude Include="Sound.h" />
     <ClInclude Include="Logger.h" />
@@ -284,6 +293,7 @@
     <ClInclude Include="ParticleEmitter.h" />
     <ClInclude Include="ParticleManager.h" />
     <ClInclude Include="CourseManager.h" />
+	<ClInclude Include="CoursePatternManager.h" />
     <ClInclude Include="CourseSegment.h" />
     <ClInclude Include="Obstacle.h" />
     <ClInclude Include="ObstacleManager.h" />
@@ -357,6 +367,114 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>resources\tyoutinC.png</TargetPath>
     </None>
+	<None Include="resources\maruta.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\maruta.obj</TargetPath>
+	</None>
+	<None Include="resources\maruta.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\maruta.mtl</TargetPath>
+	</None>
+	<None Include="resources\marutaC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\marutaC.png</TargetPath>
+	</None>
+	<None Include="resources\miniSoul.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\miniSoul.obj</TargetPath>
+	</None>
+	<None Include="resources\miniSoul.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\miniSoul.mtl</TargetPath>
+	</None>
+	<None Include="resources\miniSoulC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\miniSoulC.png</TargetPath>
+	</None>
+	<None Include="resources\healOhuda.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\healOhuda.obj</TargetPath>
+	</None>
+	<None Include="resources\healOhuda.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\healOhuda.mtl</TargetPath>
+	</None>
+	<None Include="resources\healOhudaC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\healOhudaC.png</TargetPath>
+	</None>
+	<None Include="resources\tree.obj">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\tree.obj</TargetPath>
+	</None>
+	<None Include="resources\tree.mtl">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\tree.mtl</TargetPath>
+	</None>
+	<None Include="resources\treeC.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\treeC.png</TargetPath>
+	</None>
+	<None Include="resources\forTitle.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\forTitle.png</TargetPath>
+	</None>
+	<None Include="resources\title\collection.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\title\collection.png</TargetPath>
+	</None>
+	<None Include="resources\collection\achievementBookClosed.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\collection\achievementBookClosed.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultOfuda.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultOfuda.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultDistance.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultDistance.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultSouls.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultSouls.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultScore.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultScore.png</TargetPath>
+	</None>
+	<None Include="resources\result\Retry.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\Retry.png</TargetPath>
+	</None>
+	<None Include="resources\result\toTitle.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\toTitle.png</TargetPath>
+	</None>
+	<None Include="resources\result\resultNewRecord.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\resultNewRecord.png</TargetPath>
+	</None>
+	<None Include="resources\result\collect1.png">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\result\collect1.png</TargetPath>
+	</None>
+	<None Include="resources\building\k_ryu_shizumi_tourou.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_ryu_shizumi_tourou.glb</TargetPath>
+	</None>
+	<None Include="resources\building\k_machiya_a.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_machiya_a.glb</TargetPath>
+	</None>
+	<None Include="resources\building\k_minato_banya.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_minato_banya.glb</TargetPath>
+	</None>
+	<None Include="resources\building\k_v_ne_torii.glb">
+	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  <TargetPath>resources\building\k_v_ne_torii.glb</TargetPath>
+	</None>
     <None Include="resources\shaders\Object3d.hlsli" />
     <None Include="resources\shaders\Particle.hlsli" />
     <None Include="Skybox.hlsli" />

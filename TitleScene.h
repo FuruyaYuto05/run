@@ -26,7 +26,12 @@ private:
 	};
 	enum class MenuItem {
 		Play,
+		Collection,
 		Exit,
+	};
+	enum class TransitionTarget {
+		Game,
+		Collection,
 	};
 
 	void ApplyLogoTransform(float scale, float yOffset, float rotationZ, float alpha, float rotationX = 0.0f);
@@ -42,9 +47,11 @@ private:
 	std::unique_ptr<Sprite> titleSprite_;
 	std::unique_ptr<Sprite> shadowSprite_;
 	std::unique_ptr<Sprite> playGlowSprite_;
+	std::unique_ptr<Sprite> collectionGlowSprite_;
 	std::unique_ptr<Sprite> exitGlowSprite_;
 	std::unique_ptr<Sprite> fadeSprite_;
 	std::unique_ptr<Sprite> playSprite_;
+	std::unique_ptr<Sprite> collectionSprite_;
 	std::unique_ptr<Sprite> exitSprite_;
 	std::unique_ptr<Camera> camera_;
 	std::unique_ptr<TitleRunner> runner_;
@@ -75,4 +82,5 @@ private:
 	bool previousEnterPressed_ = false;
 	bool previousUpPressed_ = false;
 	bool previousDownPressed_ = false;
+	TransitionTarget transitionTarget_ = TransitionTarget::Game;
 };

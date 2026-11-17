@@ -2,10 +2,12 @@
 
 #include "Math.h"
 #include <memory>
+#include <random>
 #include <vector>
 
 class Obstacle;
 class Object3dCommon;
+enum class ObstacleType;
 
 class ObstacleManager {
 public:
@@ -20,5 +22,9 @@ public:
 
 private:
 	std::vector<std::unique_ptr<Obstacle>> obstacles_;
-	int nextLaneIndex_ = 0;
+	int RandomLaneIndex();
+	float RandomSpacing();
+	ObstacleType RandomType();
+
+	std::mt19937 randomEngine_{ std::random_device{}() };
 };

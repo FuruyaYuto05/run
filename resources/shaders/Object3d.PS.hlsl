@@ -55,7 +55,8 @@ PixelShaderOutput main(VertexShaderOutput input)
     float32_t3 baseColor = gMaterial.color.rgb * textureColor.rgb;
     float32_t3 ambient = baseColor * gDirectionalLight.color.rgb * gDirectionalLight.ambientIntensity;
     float32_t3 diffuse = baseColor * gDirectionalLight.color.rgb * cos * gDirectionalLight.intensity;
-    float32_t3 specular = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPower;
+    // 金属のような強い白い反射を抑え、夜の不気味な見た目を保つ。
+    float32_t3 specular = gDirectionalLight.color.rgb * gDirectionalLight.intensity * specularPower * 0.12f;
     output.color.rgb = ambient + diffuse + specular;
     // Object3Dは不透明用パイプラインなので、出力αも常に不透明にする。
     output.color.a = 1.0f;

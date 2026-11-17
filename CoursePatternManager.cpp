@@ -174,9 +174,10 @@ CoursePatternManager::PatternType CoursePatternManager::ChoosePattern() {
 		forceSoulPairAfterLog_ = false;
 		return PatternType::SoulPair;
 	}
-	// 灯籠55%、通常の魂20%、回復お札15%、丸太10%。
+	// 灯籠70%、通常の魂10%、回復お札13%、丸太7%。
+	// お札のパターンにも灯籠を置くため、全体として灯籠が主役になる。
 	// 連続で同じ形が続かないよう再抽選する。
-	std::discrete_distribution<int> distribution({ 20, 55, 10, 15 });
+	std::discrete_distribution<int> distribution({ 10, 70, 7, 13 });
 	PatternType result = previousPattern_;
 	for (int attempt = 0; attempt < 4 && result == previousPattern_; ++attempt) {
 		result = static_cast<PatternType>(distribution(randomEngine_));

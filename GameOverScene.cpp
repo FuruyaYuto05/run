@@ -18,7 +18,11 @@
 namespace {
 constexpr float kDeltaTime = 1.0f / 60.0f;
 constexpr float kIntroDuration = 0.60f;
-constexpr float kMenuAppearStart = 0.78f;
+// お札が貼り付いてから記録とメニューを見せる。
+constexpr float kResultTextAppearStart = 0.76f;
+constexpr float kResultTextRowInterval = 0.15f;
+constexpr float kResultTextAppearDuration = 0.18f;
+constexpr float kMenuAppearStart = 1.30f;
 constexpr float kMenuAppearDuration = 0.38f;
 constexpr float kFadeDuration = 0.65f;
 constexpr float kMenuWidth = 250.0f;
@@ -31,8 +35,8 @@ constexpr Math::Vector2 kResultOfudaPosition = { 470.0f, 360.0f };
 constexpr Math::Vector2 kResultOfudaSize = { 750.0f, 520.0f };
 constexpr float kHalfPi = 1.5707963f;
 constexpr int kResultDigitCount = 5;
-constexpr float kNewRecordAppearStart = 0.85f;
-constexpr float kAchievementAppearStart = 1.20f;
+constexpr float kNewRecordAppearStart = 1.55f;
+constexpr float kAchievementAppearStart = 1.90f;
 constexpr float kToastHoldDuration = 3.0f;
 constexpr float kToastFadeDuration = 0.45f;
 
@@ -284,6 +288,7 @@ void GameOverScene::InitializeResultNumbers() {
 		label->Initialize(SpriteCommon::GetInstance(), path);
 		label->SetPosition(position);
 		label->SetSize({ 132.0f, 27.0f });
+		label->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
 		label->Update();
 		return label;
 	};
@@ -299,6 +304,7 @@ void GameOverScene::InitializeResultNumbers() {
 			digit->SetPosition({ 515.0f + 34.0f * i, y });
 			digit->SetSize({ 34.0f, 34.0f });
 			digit->SetTextureSize({ 100.0f, 100.0f });
+			digit->SetColor({ 1.0f, 1.0f, 1.0f, 0.0f });
 			digits.push_back(std::move(digit));
 		}
 	};
@@ -374,6 +380,27 @@ void GameOverScene::UpdateLayout() {
 		kResultOfudaSize.y * (0.92f + resultT * 0.08f),
 	});
 	resultOfudaSprite_->SetColor({ 1.0f, 1.0f, 1.0f, resultT });
+
+	// お札が着地してから、記録を上から一行ずつ表示する。
+	// 紙より文字が先に見える違和感を防ぎ、記録を読む順番も作る。
+	auto revealResultRow = [this](Sprite* label, const std::vector<std::unique_ptr<Sprite>>& digits, int rowIndex) {
+		const float start = kResultTextAppearStart + kResultTextRowInterval * static_cast<float>(rowIndex);
+		const float t = std::clamp(
+			(elapsedTime_ - start) / kResultTextAppearDuration, 0.0f, 1.0f);
+		const float alpha = SmoothStep(t);
+		const float labelScale = 0.92f + 0.08f * alpha;
+		label->SetSize({ 132.0f * labelScale, 27.0f * labelScale });
+		label->SetColor({ 1.0f, 1.0f, 1.0f, alpha });
+		label->Update();
+		for (const auto& digit : digits) {
+			digit->SetSize({ 34.0f * labelScale, 34.0f * labelScale });
+			digit->SetColor({ 1.0f, 1.0f, 1.0f, alpha });
+			digit->Update();
+		}
+	};
+	revealResultRow(resultDistanceLabelSprite_.get(), distanceDigitSprites_, 0);
+	revealResultRow(resultSoulsLabelSprite_.get(), soulsDigitSprites_, 1);
+	revealResultRow(resultScoreLabelSprite_.get(), scoreDigitSprites_, 2);
 
 	const float menuT = std::clamp(
 		(elapsedTime_ - kMenuAppearStart) / kMenuAppearDuration, 0.0f, 1.0f);

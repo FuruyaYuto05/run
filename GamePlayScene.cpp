@@ -278,7 +278,9 @@ void GamePlayScene::Update() {
 		UpdateGhost();
 		// 床は流すが、演出中は再配置を止めて画面内で消えるのを防ぐ。
 		courseManager_->Update(camera_->GetTranslate().z, false);
-		forestManager_->Update(camera_->GetTranslate().z, 0.0f, 0.0f);
+		// カメラが動くオープニング中も、床と同じ速度で木を流す。
+		forestManager_->Update(
+			camera_->GetTranslate().z, courseManager_->GetMoveSpeed(), 0.0f);
 		for (const auto& sprite : hpSprites_) { sprite->Update(); }
 		UpdateSceneReveal();
 		return;

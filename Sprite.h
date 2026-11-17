@@ -72,6 +72,9 @@ public:
     /// </summary>
     void SetColor(const Math::Vector4& color) { this->materialData_->color = color; }
 
+    // 実績の未達成表示などで使う、テクスチャをモノクロ化する設定。
+    void SetGrayscale(bool enabled) { materialData_->isGrayscale = enabled ? 1 : 0; }
+
     // サイズ (Size) の Getter と Setter を追加
 /// <summary>
 /// サイズのGetter
@@ -138,7 +141,8 @@ private:
     struct Material {
         Math::Vector4 color;             // 色情報 (Vector4)
         int32_t enableLighting;          // ライティング有効/無効フラグ (int32_t)
-        float padding[3];                // パディング (float[3])
+        int32_t isGrayscale;             // モノクロ表示フラグ
+        float padding[2];                // パディング
         Math::Matrix4x4 uvTransform;     // UV変換行列 (Matrix4x4)
     };
 

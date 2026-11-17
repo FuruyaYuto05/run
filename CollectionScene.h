@@ -5,7 +5,7 @@
 
 class Sprite;
 
-// 閉じた実績帳を表示するコレクション画面。
+// 表紙から見開きの実績一覧へ切り替えるコレクション画面。
 class CollectionScene : public BaseScene {
 public:
 	CollectionScene();
@@ -16,8 +16,20 @@ public:
 	void Draw() override;
 
 private:
+	enum class BookState {
+		Entering,
+		Closed,
+		Opening,
+		Open,
+	};
+
 	std::unique_ptr<Sprite> backgroundSprite_;
 	std::unique_ptr<Sprite> bookSprite_;
+	std::unique_ptr<Sprite> openBookSprite_;
+	std::unique_ptr<Sprite> firstPlayAchievementSprite_;
+	BookState bookState_ = BookState::Entering;
 	float enterTime_ = 0.0f;
 	float pulseTime_ = 0.0f;
+	float openingTime_ = 0.0f;
+	bool previousSpacePressed_ = false;
 };

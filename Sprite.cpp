@@ -113,6 +113,7 @@ void Sprite::CreateMaterial() {
     // --- 3. マテリアルデータの初期値を書き込む (スライドの指示) ---
     materialData_->color = { 1.0f, 1.0f, 1.0f, 1.0f };
     materialData_->enableLighting = false; // false = 0
+    materialData_->isGrayscale = 0;
     // paddingはDxCommonで適切なサイズになるよう調整されるため、ここでは省略
     materialData_->uvTransform = Math::MakeIdentity4x4();
 }

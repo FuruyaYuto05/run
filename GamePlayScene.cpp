@@ -11,6 +11,7 @@
 #include "CourseManager.h"
 #include "CoursePatternManager.h"
 #include "ForestManager.h"
+#include "AchievementManager.h"
 #include "GameOverScene.h"
 #include "TitleScene.h"
 #include "SceneManager.h"
@@ -161,6 +162,8 @@ void GamePlayScene::Initialize() {
 	// ゲーム内の各管理オブジェクトを生成する。
 	player_ = std::make_unique<Player>();
 	player_->Initialize(object3dCommon_, input_);
+	// ゲームを開始した時点で、最初の実績を記録する。
+	AchievementManager::GetInstance().Unlock(AchievementId::FirstPlay);
 	// スタート演出で、自機の後方から追ってくる祟りを表示する。
 	ghostObject_ = std::make_unique<Object3d>();
 	ghostObject_->Initialize(object3dCommon_);
@@ -296,6 +299,9 @@ void GamePlayScene::Update() {
 	}
 	UpdateGhost();
 	courseManager_->Update(camera_->GetTranslate().z);
+	if (courseManager_->GetRunDistance() >= 10.0f) {
+		AchievementManager::GetInstance().Unlock(AchievementId::Run10Meters);
+	}
 	// 暫定スコア: 進んだ距離 1 ごとに1点、魂1個につき10点。
 	score_ = static_cast<int>(courseManager_->GetRunDistance()) + soulCollectedCount_ * 10;
 	UpdateScoreUi();
@@ -316,6 +322,9 @@ void GamePlayScene::Update() {
 		// 小さな魂はコイン感覚で連続取得するため、回復量は控えめにする。
 		player_->RecoverSpirit(4.0f);
 		++soulCollectedCount_;
+		if (soulCollectedCount_ >= 5) {
+			AchievementManager::GetInstance().Unlock(AchievementId::CollectFiveSouls);
+		}
 		score_ = static_cast<int>(courseManager_->GetRunDistance()) + soulCollectedCount_ * 10;
 		UpdateScoreUi();
 		break;

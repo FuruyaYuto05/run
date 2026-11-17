@@ -2,7 +2,8 @@ struct Material
 {
     float4 color;
     int enableLighting;
-    float3 padding;
+    int isGrayscale;
+    float2 padding;
     float4x4 uvTransform;
 };
 ConstantBuffer<Material> gMaterial : register(b0);
@@ -24,6 +25,11 @@ struct PixelShaderInput
 PixelShaderOutput main(PixelShaderInput input)
 {
     PixelShaderOutput output;
-    output.color = gMaterial.color * gTexture.Sample(gSampler, input.texcoord);
+    float4 sampledColor = gTexture.Sample(gSampler, input.texcoord);
+    if (gMaterial.isGrayscale != 0) {
+        const float luminance = dot(sampledColor.rgb, float3(0.299f, 0.587f, 0.114f));
+        sampledColor.rgb = luminance.xxx;
+    }
+    output.color = gMaterial.color * sampledColor;
     return output;
 }

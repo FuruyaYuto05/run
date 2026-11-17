@@ -290,6 +290,13 @@ void GamePlayScene::Update() {
 	// カメラ・プレイヤー・コース・障害物を順番に更新する。
 	camera_->Update();
 	player_->Update();
+	// 発表用ブランチでは、操作開始から少し走った後に敗北演出を必ず再生する。
+	// これによりSTARTからリザルトまでを短時間で一通り見せられる。
+	gameplayTime_ += kDeltaTime;
+	if (gameplayTime_ >= kAutoGameOverDelay) {
+		StartGameOverSequence();
+		return;
+	}
 	player_->UpdateSpirit(kDeltaTime);
 	if (player_->IsDead()) {
 		StartGameOverSequence();

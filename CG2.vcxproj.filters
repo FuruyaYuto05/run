@@ -78,9 +78,9 @@
     <ClCompile Include="CourseManager.cpp">
       <Filter>Game\Course</Filter>
     </ClCompile>
-	<ClCompile Include="CoursePatternManager.cpp">
-	  <Filter>Game\Course</Filter>
-	</ClCompile>
+    <ClCompile Include="CoursePatternManager.cpp">
+      <Filter>Game\Course</Filter>
+    </ClCompile>
     <ClCompile Include="CourseSegment.cpp">
       <Filter>Game\Course</Filter>
     </ClCompile>
@@ -325,9 +325,9 @@
     <ClInclude Include="CourseManager.h">
       <Filter>Game\Course</Filter>
     </ClInclude>
-	<ClInclude Include="CoursePatternManager.h">
-	  <Filter>Game\Course</Filter>
-	</ClInclude>
+    <ClInclude Include="CoursePatternManager.h">
+      <Filter>Game\Course</Filter>
+    </ClInclude>
     <ClInclude Include="StringUtility.h">
       <Filter>Engine\Utility</Filter>
     </ClInclude>
@@ -439,6 +439,42 @@
       <Filter>リソース ファイル</Filter>
     </None>
     <None Include="resources\collection\achievementBookClosed.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\building\k_ryu_shizumi_tourou.glb">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\building\k_minato_banya.glb">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\building\k_machiya_a.glb">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\collect1.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\building\k_v_ne_torii.glb">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\resultDistance.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\resultNewRecord.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\resultOfuda.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\resultScore.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\resultSouls.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\Retry.png">
+      <Filter>リソース ファイル</Filter>
+    </None>
+    <None Include="resources\result\toTitle.png">
       <Filter>リソース ファイル</Filter>
     </None>
   </ItemGroup>

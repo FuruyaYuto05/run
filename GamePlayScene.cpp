@@ -186,6 +186,8 @@ void GamePlayScene::Initialize() {
 	courseManager_->UpdateTransformOnly();
 	coursePatternManager_->Update(kGameplayCameraPosition.z, 0.0f, kDeltaTime);
 	openingCameraTime_ = 0.0f;
+	animationTime_ = 0.0f;
+	animationTime_ = 0.0f;
 	gameplayStarted_ = false;
 	soulCollectedCount_ = 0;
 	score_ = 0;

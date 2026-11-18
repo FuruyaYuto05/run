@@ -20,6 +20,7 @@ constexpr float kLogCollisionHalfWidth = 3.4f;
 constexpr float kLogCollisionHalfDepth = 0.8f;
 constexpr float kLogJumpClearHeight = 0.85f;
 
+// コースパターンの種類
 float ObstacleY(ObstacleType type) {
 	return type == ObstacleType::Log ? kLogY : kLanternY;
 }
@@ -47,6 +48,7 @@ void CoursePatternManager::Finalize() {
 }
 
 void CoursePatternManager::Update(float cameraZ, float moveSpeed, float deltaTime) {
+	// カメラの位置に応じて、奥にコースパターンを追加す
 	for (const auto& obstacle : obstacles_) {
 		Math::Vector3 position = obstacle->GetPosition();
 		position.z -= moveSpeed;
@@ -112,12 +114,13 @@ ItemType CoursePatternManager::CheckCollection(const Math::Vector3& playerPositi
 	}
 	return ItemType::None;
 }
-
+// コースパターンを追加す
 void CoursePatternManager::AppendPattern() {
 	const PatternType pattern = ChoosePattern();
 	const float z = nextPatternZ_;
 
 	switch (pattern) {
+		// ここにパターンごとの障害物やアイテムの配置を追加する
 	case PatternType::SoulPair: {
 		// 2個の魂は障害物なしで、どのレーンにも自然に置く。
 		const int lane = RandomLaneIndex();
@@ -161,20 +164,21 @@ void CoursePatternManager::AppendPattern() {
 	}
 	previousPattern_ = pattern;
 }
-
+// ランダムにパターンを選ぶ
+// ただし、丸太の後は必ず魂の列を置く
 void CoursePatternManager::AddObstacle(ObstacleType type, float x, float z) {
 	auto obstacle = std::make_unique<Obstacle>();
 	obstacle->Initialize(object3dCommon_, { x, ObstacleY(type), z }, type);
 	obstacle->Update();
 	obstacles_.push_back(std::move(obstacle));
 }
-
+// アイテムは障害物の奥に置くことが多いので、障害物の奥に置く場合はzを少し大きめにする。
 void CoursePatternManager::AddItem(ItemType type, int laneIndex, float z) {
 	auto item = std::make_unique<Item>();
 	item->Initialize(object3dCommon_, type, { kLanePositions[laneIndex], type == ItemType::HealOhuda ? kOfudaY : kSoulY, z });
 	items_.push_back(std::move(item));
 }
-
+// ランダムにレーン番号を返す
 CoursePatternManager::PatternType CoursePatternManager::ChoosePattern() {
 	if (forceSoulPairAfterLog_) {
 		forceSoulPairAfterLog_ = false;
@@ -190,18 +194,18 @@ CoursePatternManager::PatternType CoursePatternManager::ChoosePattern() {
 	}
 	return result;
 }
-
+// ランダムにレーンを選ぶ
 int CoursePatternManager::RandomLaneIndex() {
 	std::uniform_int_distribution<int> distribution(0, kLaneCount - 1);
 	return distribution(randomEngine_);
 }
-
+// ランダムにレーンを選ぶが、指定されたレーンとは異なるレーンを返す
 int CoursePatternManager::RandomDifferentLane(int excludedLane) {
 	std::uniform_int_distribution<int> distribution(0, kLaneCount - 2);
 	const int value = distribution(randomEngine_);
 	return value >= excludedLane ? value + 1 : value;
 }
-
+// すでに通過した障害物やアイテムを削除する
 void CoursePatternManager::RemovePassedObjects(float cameraZ) {
 	const float border = cameraZ - kRemoveBehindDistance;
 	auto removeObstacle = [border](const std::unique_ptr<Obstacle>& obstacle) {

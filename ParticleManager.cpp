@@ -5,6 +5,32 @@
 #include "TextureManager.h"
 
 #include <cassert>
+#include <algorithm>
+#include <array>
+
+#ifdef USE_IMGUI
+#include <imgui.h>
+#endif
+
+namespace {
+float RandomRange(std::mt19937& engine, float minimum, float maximum) {
+    if (minimum >= maximum) {
+        return minimum;
+    }
+    return std::uniform_real_distribution<float>(minimum, maximum)(engine);
+}
+
+Math::Vector3 RandomVector3(
+    std::mt19937& engine,
+    const Math::Vector3& minimum,
+    const Math::Vector3& maximum) {
+    return {
+        RandomRange(engine, minimum.x, maximum.x),
+        RandomRange(engine, minimum.y, maximum.y),
+        RandomRange(engine, minimum.z, maximum.z),
+    };
+}
+}
 
 ParticleManager* ParticleManager::GetInstance()
 {
@@ -41,7 +67,8 @@ void ParticleManager::Initialize(DirectXCommon* dxCommon, SrvManager* srvManager
 
 void ParticleManager::CreateParticleGroup(
     const std::string& name,
-    const std::string& textureFilePath
+    const std::string& textureFilePath,
+    const ParticleSettings& settings
 )
 {
     // ==============================
@@ -67,6 +94,7 @@ void ParticleManager::CreateParticleGroup(
 
     particleGroup.textureIndex =
         TextureManager::GetInstance()->GetTextureIndexByFilePath(textureFilePath);
+    particleGroup.settings = settings;
 
     // ==============================
     // インスタンシング用リソースを作成
@@ -161,6 +189,17 @@ void ParticleManager::Update(const Math::Matrix4x4& viewProjectionMatrix)
             particle.transform.translate.x += particle.velocity.x * (1.0f / 60.0f);
             particle.transform.translate.y += particle.velocity.y * (1.0f / 60.0f);
             particle.transform.translate.z += particle.velocity.z * (1.0f / 60.0f);
+
+            // 出現時は濃く、寿命の終わりに近づくほど小さく透明にする。
+            const float t = std::clamp(particle.currentTime / particle.lifeTime, 0.0f, 1.0f);
+            particle.transform.scale = Math::Lerp(
+                particle.startScale, particle.endScale, t);
+            particle.color = {
+                particle.startColor.x + (particle.endColor.x - particle.startColor.x) * t,
+                particle.startColor.y + (particle.endColor.y - particle.startColor.y) * t,
+                particle.startColor.z + (particle.endColor.z - particle.startColor.z) * t,
+                particle.startColor.w + (particle.endColor.w - particle.startColor.w) * t,
+            };
 
             // ==============================
             // 最大数を超えたらGPUに書き込まない
@@ -300,13 +339,18 @@ void ParticleManager::Emit(
         Particle particle{};
 
         // ==============================
+        const ParticleSettings& settings = particleGroup.settings;
+
         // 大きさ
         // ==============================
-        particle.transform.scale = {
-            0.3f,
-            0.3f,
-            0.3f
+        particle.startScale = RandomVector3(
+            randomEngine_, settings.minScale, settings.maxScale);
+        particle.endScale = {
+            particle.startScale.x * 1.35f,
+            particle.startScale.y * 1.35f,
+            particle.startScale.z * 1.35f,
         };
+        particle.transform.scale = particle.startScale;
 
         // ==============================
         // 回転
@@ -324,28 +368,22 @@ void ParticleManager::Emit(
 
         // ==============================
         // 速度
-        // とりあえず上に少し動く
         // ==============================
-        particle.velocity = {
-            0.0f,
-            0.03f,
-            0.0f
-        };
+        particle.velocity = RandomVector3(
+            randomEngine_, settings.minVelocity, settings.maxVelocity);
 
         // ==============================
         // 色
         // ==============================
-        particle.color = {
-            1.0f,
-            1.0f,
-            1.0f,
-            1.0f
-        };
+        particle.startColor = settings.startColor;
+        particle.endColor = settings.endColor;
+        particle.color = particle.startColor;
 
         // ==============================
         // 寿命
         // ==============================
-        particle.lifeTime = 1.0f;
+        particle.lifeTime = RandomRange(
+            randomEngine_, settings.minLifeTime, settings.maxLifeTime);
         particle.currentTime = 0.0f;
 
         // ==============================
@@ -353,6 +391,55 @@ void ParticleManager::Emit(
         // ==============================
         particleGroup.particles.push_back(particle);
     }
+}
+
+void ParticleManager::Clear()
+{
+    for (auto& [name, particleGroup] : particleGroups_) {
+        particleGroup.particles.clear();
+        particleGroup.numInstance = 0;
+    }
+}
+
+void ParticleManager::DrawImGuiContent()
+{
+#ifdef USE_IMGUI
+	ImGui::SeparatorText("Particles");
+	ImGui::TextDisabled("Changes apply to newly emitted particles.");
+	if (ImGui::Button("Clear All Particles")) {
+		Clear();
+	}
+
+	const std::array<const char*, 3> groupNames = { "dust", "fog", "soulFire" };
+	const std::array<const char*, 3> displayNames = { "Dust (player feet)", "Fog (stage)", "Soul Fire" };
+	for (size_t index = 0; index < groupNames.size(); ++index) {
+		auto it = particleGroups_.find(groupNames[index]);
+		if (it == particleGroups_.end()) {
+			continue;
+		}
+		ParticleGroup& group = it->second;
+		ParticleSettings& settings = group.settings;
+
+		ImGui::PushID(groupNames[index]);
+		if (ImGui::TreeNode(displayNames[index])) {
+			ImGui::Text("Active: %zu", group.particles.size());
+			ImGui::DragFloat3("Min Scale", &settings.minScale.x, 0.01f, 0.01f, 10.0f);
+			ImGui::DragFloat3("Max Scale", &settings.maxScale.x, 0.01f, 0.01f, 10.0f);
+			ImGui::DragFloat3("Min Velocity", &settings.minVelocity.x, 0.01f, -5.0f, 5.0f);
+			ImGui::DragFloat3("Max Velocity", &settings.maxVelocity.x, 0.01f, -5.0f, 5.0f);
+			ImGui::ColorEdit4("Start Color", &settings.startColor.x);
+			ImGui::ColorEdit4("End Color", &settings.endColor.x);
+			ImGui::DragFloat("Min Life", &settings.minLifeTime, 0.01f, 0.05f, 20.0f);
+			ImGui::DragFloat("Max Life", &settings.maxLifeTime, 0.01f, 0.05f, 20.0f);
+
+			if (settings.minLifeTime > settings.maxLifeTime) {
+				settings.maxLifeTime = settings.minLifeTime;
+			}
+			ImGui::TreePop();
+		}
+		ImGui::PopID();
+	}
+#endif
 }
 
 void ParticleManager::Finalize()

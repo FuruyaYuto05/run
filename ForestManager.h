@@ -14,6 +14,7 @@ public:
 	void Finalize();
 	void Update(float cameraZ, float moveSpeed, float runDistance);
 	void Draw();
+	void DrawImGui(float runDistance, float cameraZ);
 
 private:
 	struct Tree {
@@ -30,7 +31,6 @@ private:
 	float RandomRotation();
 	float RandomBuildingX(float side);
 	void StartVillage(float cameraZ, bool placeImmediately);
-	void DrawImGui(float runDistance, float cameraZ);
 	bool IsInDrawRange(const Object3d& object) const;
 
 	std::vector<Tree> trees_;

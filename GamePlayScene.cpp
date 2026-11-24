@@ -2,6 +2,8 @@
 #include "Camera.h"
 #include "Object3d.h"
 #include "Object3dCommon.h"
+#include "DirectXCommon.h"
+#include "WinApp.h"
 #include "Model.h"
 #include "ModelManager.h"
 #include "Sprite.h"
@@ -11,6 +13,8 @@
 #include "CourseManager.h"
 #include "CoursePatternManager.h"
 #include "ForestManager.h"
+#include "ParticleManager.h"
+#include "DebugLayout.h"
 #include "AchievementManager.h"
 #include "GameOverScene.h"
 #include "TitleScene.h"
@@ -131,6 +135,13 @@ void GamePlayScene::Initialize() {
 	TextureManager::GetInstance()->LoadTexture("resources/number.png");
 	TextureManager::GetInstance()->LoadTexture("resources/human/white.png");
 	camera_ = std::make_unique<Camera>();
+	#ifdef USE_IMGUI
+	// デバッグハブでは中央のビューポートの縦横比で描画する。
+	// これを入れないと、中央表示にした時だけ3Dモデルが横につぶれて見える。
+	const DebugLayout::Rect gameView = DebugLayout::GetGameViewRect(
+		{ static_cast<float>(WinApp::kClientWidth), static_cast<float>(WinApp::kClientHeight) });
+	camera_->SetAspectRatio(gameView.width / gameView.height);
+	#endif
 	// 最初はプレイヤーの顔を正面から映す。
 	camera_->SetRotate(kOpeningCameraRotation);
 	camera_->SetTranslate(kOpeningCameraPosition);
@@ -186,6 +197,10 @@ void GamePlayScene::Initialize() {
 	courseManager_->UpdateTransformOnly();
 	coursePatternManager_->Update(kGameplayCameraPosition.z, 0.0f, kDeltaTime);
 	openingCameraTime_ = 0.0f;
+	playerDustEmitTime_ = 0.0f;
+	fogEmitTime_ = 0.0f;
+	openingFogTime_ = 0.0f;
+	ParticleManager::GetInstance()->Clear();
 	animationTime_ = 0.0f;
 	animationTime_ = 0.0f;
 	gameplayStarted_ = false;
@@ -229,22 +244,35 @@ void GamePlayScene::Finalize() {
 
 void GamePlayScene::Update() {
 #ifdef USE_IMGUI
-	// デバッグ中だけ各種パラメータを画面から調整する。
-	player_->DrawImGui();
-	courseManager_->DrawImGui();
-
-	ImGui::Begin("Camera Settings");
+	// 中央をゲーム画面として残し、調整項目は外周の固定パネルにまとめる。
+	DrawDebugToolbar();
+	DebugLayout::BeginPanel("Inspector", DebugLayout::Panel::Right);
+	ImGui::SeparatorText("Player");
+	player_->DrawImGuiContent();
+	ImGui::SeparatorText("Camera");
+	ImGui::PushID("Camera");
 	Math::Vector3 cameraPosition = camera_->GetTranslate();
-	if (ImGui::DragFloat3("Position", &cameraPosition.x, 0.1f)) { camera_->SetTranslate(cameraPosition); }
+	bool cameraChanged = ImGui::DragFloat3("Position", &cameraPosition.x, 0.1f);
 	Math::Vector3 cameraRotation = camera_->GetRotate();
-	if (ImGui::DragFloat3("Rotation", &cameraRotation.x, 0.01f)) { camera_->SetRotate(cameraRotation); }
+	cameraChanged |= ImGui::DragFloat3("Rotation", &cameraRotation.x, 0.01f);
+	if (cameraChanged) {
+		camera_->SetTranslate(cameraPosition);
+		camera_->SetRotate(cameraRotation);
+		camera_->Update();
+	}
+	if (ImGui::Button("Reset Gameplay Camera")) {
+		camera_->SetTranslate(kGameplayCameraPosition);
+		camera_->SetRotate(kGameplayCameraRotation);
+		camera_->Update();
+	}
+	ImGui::PopID();
+	ParticleManager::GetInstance()->DrawImGuiContent();
 	ImGui::End();
-
-	ImGui::Begin("Game Score");
-	ImGui::Text("Distance: %.0f", courseManager_->GetRunDistance());
-	ImGui::Text("Souls: %d", soulCollectedCount_);
-	ImGui::Text("Score: %d", score_);
-	ImGui::End();
+	courseManager_->DrawImGui();
+	forestManager_->DrawImGui(courseManager_->GetRunDistance(), camera_->GetTranslate().z);
+	if (debugPaused_) {
+		return;
+	}
 #endif
 	// 体験版では、いつでもTキーでタイトルへ戻れるようにする。
 	if (input_->Pushkey(DIK_T)) {
@@ -253,6 +281,7 @@ void GamePlayScene::Update() {
 	}
 	if (gameOverPhase_ != GameOverPhase::None) {
 		UpdateGameOverSequence();
+		ParticleManager::GetInstance()->Update(camera_->GetViewProjectionMatrix());
 		return;
 	}
 	// 走行アニメーションを繰り返し再生する。
@@ -270,6 +299,8 @@ void GamePlayScene::Update() {
 		if (tutorialActive_) {
 			camera_->Update();
 			player_->UpdateTransformOnly();
+			// 追跡される最初の画面から、足元の砂ぼこりを見せる。
+			UpdateOpeningParticles();
 			// 演出中も森の背景を最初から準備し、視点切り替え時の出現を防ぐ。
 			forestManager_->Update(camera_->GetTranslate().z, 0.0f, 0.0f);
 			for (const auto& sprite : hpSprites_) { sprite->Update(); }
@@ -280,6 +311,7 @@ void GamePlayScene::Update() {
 		camera_->Update();
 		// 自機は移動させず、移動中のカメラだけを描画へ反映する。
 		player_->UpdateTransformOnly();
+		UpdateOpeningParticles();
 		UpdateGhost();
 		// 床は流すが、演出中は再配置を止めて画面内で消えるのを防ぐ。
 		courseManager_->Update(camera_->GetTranslate().z, false);
@@ -345,6 +377,110 @@ void GamePlayScene::Update() {
 	UpdateGameUi();
 	UpdateStartRunEffect();
 	UpdateSceneReveal();
+	UpdateGameplayParticles();
+}
+
+void GamePlayScene::DrawDebugToolbar() {
+#ifdef USE_IMGUI
+	DebugLayout::BeginPanel("Debug Hub", DebugLayout::Panel::Toolbar);
+	ImGui::TextColored({ 0.40f, 0.90f, 1.0f, 1.0f }, "GAME VIEW");
+	ImGui::SameLine();
+	ImGui::TextDisabled("  Center is the live game.  Parameters stay in the panels around it.");
+	ImGui::SameLine();
+	ImGui::Dummy({ 18.0f, 0.0f });
+	ImGui::SameLine();
+	if (ImGui::Button(debugPaused_ ? "Resume" : "Pause")) {
+		debugPaused_ = !debugPaused_;
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Restart Scene")) {
+		sceneManager_->SetNextScene(std::make_unique<GamePlayScene>());
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Title (T)")) {
+		sceneManager_->SetNextScene(std::make_unique<TitleScene>());
+	}
+	ImGui::SameLine();
+	ImGui::Dummy({ 12.0f, 0.0f });
+	ImGui::SameLine();
+	ImGui::Text("Distance %.0fm   Souls %d   Score %d", courseManager_->GetRunDistance(), soulCollectedCount_, score_);
+	ImGui::SameLine();
+	ImGui::Text("FPS %.1f", ImGui::GetIO().Framerate);
+	ImGui::End();
+#endif
+}
+
+void GamePlayScene::UpdateGameplayParticles() {
+	// 足元の砂ぼこりは、走行中だけ短い間隔で出す。
+	playerDustEmitTime_ += kDeltaTime;
+	if (playerDustEmitTime_ >= 0.06f) {
+		Math::Vector3 dustPosition = player_->GetPosition();
+		dustPosition.y += 0.08f;
+		dustPosition.z -= 0.20f;
+		ParticleManager::GetInstance()->Emit("dust", dustPosition, 4);
+		playerDustEmitTime_ -= 0.06f;
+	}
+
+	// 霧は道路の左右・中央・奥行きに同時に出し、ステージ全体を包む。
+	fogEmitTime_ += kDeltaTime;
+	if (fogEmitTime_ >= 0.25f) {
+		const float distance = courseManager_->GetRunDistance();
+		for (int index = 0; index < 6; ++index) {
+			const float x = -7.0f + static_cast<float>(index) * 2.8f +
+				std::sin(distance * 0.17f + static_cast<float>(index)) * 0.8f;
+			const float z = 4.0f + std::fmod(distance * 0.47f + static_cast<float>(index) * 4.7f, 25.0f);
+			const float y = 0.48f + static_cast<float>(index % 2) * 0.22f;
+			ParticleManager::GetInstance()->Emit("fog", { x, y, z }, 1);
+		}
+		fogEmitTime_ -= 0.25f;
+	}
+
+	ParticleManager::GetInstance()->Update(camera_->GetViewProjectionMatrix());
+}
+
+void GamePlayScene::UpdateOpeningParticles() {
+	// オープニングは、遠くに少量の霧から始めて、操作開始へ向けて徐々に広げる。
+	openingFogTime_ += kDeltaTime;
+	const float openingDuration = kTutorialHoldDuration + kOpeningHoldDuration + kOpeningMoveDuration;
+	const float fogProgress = std::clamp(openingFogTime_ / openingDuration, 0.0f, 1.0f);
+
+	// 足元の砂ぼこりは、追跡されている最初の場面から継続する。
+	playerDustEmitTime_ += kDeltaTime;
+	if (playerDustEmitTime_ >= 0.06f) {
+		Math::Vector3 dustPosition = player_->GetPosition();
+		dustPosition.y += 0.08f;
+		dustPosition.z -= 0.20f;
+		ParticleManager::GetInstance()->Emit("dust", dustPosition, 4);
+		playerDustEmitTime_ -= 0.06f;
+	}
+
+	// 最初は約1.2秒に1枚、終盤は0.4秒ごとに3枚まで増やす。
+	const float fogInterval = 1.20f - 0.80f * fogProgress;
+	fogEmitTime_ += kDeltaTime;
+	if (fogEmitTime_ >= fogInterval) {
+		const int fogCount = fogProgress < 0.35f ? 1 : (fogProgress < 0.70f ? 2 : 3);
+		const Math::Vector3 cameraPosition = camera_->GetTranslate();
+		const float cameraYaw = camera_->GetRotate().y;
+		const float forwardX = std::sin(cameraYaw);
+		const float forwardZ = std::cos(cameraYaw);
+		const float sideX = forwardZ;
+		const float sideZ = -forwardX;
+		const float spread = 1.0f + fogProgress * 4.5f;
+
+		for (int index = 0; index < fogCount; ++index) {
+			const float centeredIndex = static_cast<float>(index) - static_cast<float>(fogCount - 1) * 0.5f;
+			const float sideOffset = centeredIndex * spread;
+			const float depth = 7.0f + static_cast<float>(index) * 3.0f;
+			const float wave = std::sin(openingFogTime_ * 1.8f + static_cast<float>(index)) * 0.6f;
+			ParticleManager::GetInstance()->Emit("fog", {
+				cameraPosition.x + forwardX * depth + sideX * (sideOffset + wave),
+				0.48f + static_cast<float>(index % 2) * 0.22f,
+				cameraPosition.z + forwardZ * depth + sideZ * (sideOffset + wave),
+			}, 1);
+		}
+		fogEmitTime_ -= fogInterval;
+	}
+	ParticleManager::GetInstance()->Update(camera_->GetViewProjectionMatrix());
 }
 
 void GamePlayScene::UpdateGhost() {
@@ -779,6 +915,14 @@ float GamePlayScene::NextDeathHandRandom01() {
 }
 
 void GamePlayScene::Draw() {
+	DirectXCommon* dxCommon = Object3dCommon::GetInstance()->GetDxCommon();
+#ifdef USE_IMGUI
+	// デバッグ中は、実際の3D／2Dゲーム画面も中央だけへ描画する。
+	// ImGuiのパネルを重ねるだけではないため、周囲にゲーム画面が漏れない。
+	const DebugLayout::Rect gameView = DebugLayout::GetGameViewRect(
+		{ static_cast<float>(WinApp::kClientWidth), static_cast<float>(WinApp::kClientHeight) });
+	dxCommon->SetViewportAndScissor(gameView.x, gameView.y, gameView.width, gameView.height);
+#endif
 	// 3Dゲーム画面を描いた後にHPと遷移用スプライトを重ねる。
 	courseManager_->Draw();
 	forestManager_->Draw();
@@ -789,6 +933,8 @@ void GamePlayScene::Draw() {
 		ghostObject_->Draw();
 	}
 	player_->Draw();
+	// 3Dモデルの後ろではなく、UIの前にパーティクルを重ねる。
+	ParticleManager::GetInstance()->Draw();
 
 	ID3D12GraphicsCommandList* commandList = Object3dCommon::GetInstance()->GetDxCommon()->GetCommandList();
 	SpriteCommon::GetInstance()->PreDraw(commandList);
@@ -826,4 +972,8 @@ void GamePlayScene::Draw() {
 		}
 		gameOverFadeSprite_->Draw(commandList);
 	}
+#ifdef USE_IMGUI
+	// ImGui はウィンドウ全体へ描くので、描画前に通常の領域へ戻す。
+	dxCommon->ResetViewportAndScissor();
+#endif
 }

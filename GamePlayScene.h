@@ -55,6 +55,9 @@ private:
 	void StartGameOverSequence();
 	void UpdateGameOverSequence();
 	void UpdateDeathHands(float time);
+	void UpdateGameplayParticles();
+	void UpdateOpeningParticles();
+	void DrawDebugToolbar();
 	float NextDeathHandRandom01();
 
 	Object3dCommon* object3dCommon_ = nullptr;
@@ -90,10 +93,14 @@ private:
 	float startRunFadeTime_ = 0.0f;
 	float sceneRevealTime_ = 0.0f;
 	float tutorialFadeTime_ = 0.0f;
+	float playerDustEmitTime_ = 0.0f;
+	float fogEmitTime_ = 0.0f;
+	float openingFogTime_ = 0.0f;
 	bool gameplayStarted_ = false;
 	bool startRunEffectActive_ = true;
 	bool sceneRevealActive_ = true;
 	bool tutorialActive_ = true;
+	bool debugPaused_ = false;
 	int soulCollectedCount_ = 0;
 	int score_ = 0;
 	GameOverPhase gameOverPhase_ = GameOverPhase::None;

@@ -18,7 +18,8 @@ public:
 	void UpdateTransformOnly();
 	void BeginDeathAnimation();
 	void Draw();
-	void DrawImGui();
+	// Inspectorウィンドウへ自機の調整項目だけを追加する。
+	void DrawImGuiContent();
 	void OnCollision();
 	void UpdateSpirit(float deltaSeconds);
 	void RecoverSpirit(float amount);

@@ -2,6 +2,7 @@
 
 #include "Object3d.h"
 #include "Object3dCommon.h"
+#include "ParticleManager.h"
 #include <cmath>
 
 namespace {
@@ -14,6 +15,7 @@ Item::~Item() = default;
 void Item::Initialize(Object3dCommon* object3dCommon, ItemType type, const Math::Vector3& position) {
 	type_ = type;
 	basePosition_ = position;
+	soulParticleTime_ = 0.0f;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
 
@@ -43,6 +45,15 @@ void Item::Update(float deltaTime) {
 	// 向きは固定し、上下移動だけで取得物らしさを出す。
 	object3d_->SetRotate({ 0.0, 3.0f, 0.0f });
 	object3d_->Update();
+
+	// 魂の周囲から、小さな青い火の粉をゆっくり上へ漂わせる。
+	if (type_ == ItemType::MiniSoul) {
+		soulParticleTime_ += deltaTime;
+		if (soulParticleTime_ >= 0.45f) {
+			ParticleManager::GetInstance()->Emit("soulFire", position, 1);
+			soulParticleTime_ -= 0.45f;
+		}
+	}
 }
 
 void Item::Draw() {

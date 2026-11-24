@@ -31,4 +31,5 @@ private:
 	ItemType type_ = ItemType::None;
 	Math::Vector3 basePosition_{};
 	float animationTime_ = 0.0f;
+	float soulParticleTime_ = 0.0f;
 };

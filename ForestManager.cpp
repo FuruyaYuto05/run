@@ -2,6 +2,7 @@
 
 #include "Object3d.h"
 #include "Object3dCommon.h"
+#include "DebugLayout.h"
 #include <algorithm>
 
 #ifdef USE_IMGUI
@@ -96,7 +97,6 @@ void ForestManager::Finalize() {
 
 void ForestManager::Update(float cameraZ, float moveSpeed, float runDistance) {
 	lastCameraZ_ = cameraZ;
-	DrawImGui(runDistance, cameraZ);
 	if (trees_.empty()) {
 		return;
 	}
@@ -228,7 +228,7 @@ void ForestManager::StartVillage(float cameraZ, bool placeImmediately) {
 
 void ForestManager::DrawImGui(float runDistance, float cameraZ) {
 #ifdef USE_IMGUI
-	ImGui::Begin("Side Scenery Editor");
+	DebugLayout::BeginPanel("World / Side Scenery", DebugLayout::Panel::Bottom);
 	ImGui::Text("Run Distance: %.0f m", runDistance);
 	ImGui::Text("Use sliders only. Restart the scene to reset placement.");
 	ImGui::Text("Drawn: Trees %zu / %zu, Houses %zu / %zu",

@@ -1,6 +1,7 @@
 #include "Obstacle.h"
 #include "Object3d.h"
 #include "Object3dCommon.h"
+#include "ParticleManager.h"
 #include <algorithm>
 #include <cmath>
 
@@ -30,6 +31,7 @@ void Obstacle::Initialize(Object3dCommon* object3dCommon, const Math::Vector3& i
 	// 自機が近づくと参道側へ倒れ、道を横断する障害物になる。
 	usesFallingLogEntrance_ = type_ == ObstacleType::Log && std::abs(initialPosition.x) > 3.0f;
 	logFallStarted_ = false;
+	logLandingDustEmitted_ = false;
 	logFallProgress_ = 0.0f;
 	if (usesFallingLogEntrance_) {
 		logStandingSideX_ = initialPosition.x;
@@ -78,6 +80,20 @@ void Obstacle::Update() {
 			position.y = kLogGroundY + kLogStandingY * std::abs(std::sin(rotationZ));
 			object3d_->SetTranslate(position);
 			object3d_->SetRotate({ 0.0f, 0.0f, rotationZ });
+
+			// 横倒しになって地面へ着いた瞬間だけ、接地点から土煙を上げる。
+			// 毎フレームEmitすると煙が増え続けるため、倒壊ごとに一度だけ発生させる。
+			if (!logLandingDustEmitted_ && logFallProgress_ >= 1.0f) {
+				// 根元・中央・先端へ分けて出し、丸太全体が地面へぶつかった見た目にする。
+				const float rootX = logStandingSideX_;
+				const float centerX = position.x;
+				const float tipX = logStandingSideX_ + inwardDirection * kLogStandingY * 2.0f;
+				const float dustY = kLogGroundY + 0.03f;
+				ParticleManager::GetInstance()->Emit("dust", { rootX, dustY, position.z }, 14);
+				ParticleManager::GetInstance()->Emit("dust", { centerX, dustY, position.z }, 14);
+				ParticleManager::GetInstance()->Emit("dust", { tipX, dustY, position.z }, 14);
+				logLandingDustEmitted_ = true;
+			}
 		}
 	}
 	object3d_->Update();

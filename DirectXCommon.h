@@ -89,6 +89,9 @@ public:
 	}
 	void PreDraw();
 	void PostDraw();
+	// デバッグ時に、ゲームを中央の小さなビューポートへ描くための設定。
+	void SetViewportAndScissor(float left, float top, float width, float height);
+	void ResetViewportAndScissor();
 
 private:
 

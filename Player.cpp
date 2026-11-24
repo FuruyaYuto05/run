@@ -19,8 +19,8 @@ constexpr float kMaxSpirit = 100.0f;
 // 魂を取り続けないと霊力がじわじわ尽きる速度。
 constexpr float kSpiritDrainPerSecond = 6.0f;
 constexpr float kCollisionSpiritDamage = 35.0f;
-// 配置確認用の無敵は解除し、障害物・時間経過とも通常どおりダメージを受ける。
-constexpr bool kTemporaryNoDamageForLayoutEditing = false;
+// 配置・パーティクル確認中は、障害物・霊力切れのどちらでもダメージを受けない。
+constexpr bool kTemporaryNoDamageForLayoutEditing = true;
 constexpr float kGroundY = 0.0f;
 constexpr float kJumpVelocity = 0.22f;
 constexpr float kGravity = 0.012f;
@@ -193,10 +193,8 @@ const Math::Vector3& Player::GetPosition() const {
 	return object3d_->GetTranslate();
 }
 
-void Player::DrawImGui() {
+void Player::DrawImGuiContent() {
 #ifdef USE_IMGUI
-	ImGui::Begin("Player Settings");
-
 	Math::Vector3 position = object3d_->GetTranslate();
 	ImGui::Text("Position X: %.2f", position.x);
 	bool positionChanged = ImGui::DragFloat("Position Y", &position.y, 0.1f);
@@ -249,6 +247,5 @@ void Player::DrawImGui() {
 		moveSpeed_ = std::clamp(moveSpeed_, 0.01f, 1.0f);
 	}
 
-	ImGui::End();
 #endif
 }

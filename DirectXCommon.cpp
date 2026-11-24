@@ -655,6 +655,31 @@ void DirectXCommon::PreDraw() {
 
 }
 
+void DirectXCommon::SetViewportAndScissor(float left, float top, float width, float height)
+{
+	D3D12_VIEWPORT viewport{};
+	viewport.TopLeftX = left;
+	viewport.TopLeftY = top;
+	viewport.Width = width;
+	viewport.Height = height;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	D3D12_RECT scissor{};
+	scissor.left = static_cast<LONG>(left);
+	scissor.top = static_cast<LONG>(top);
+	scissor.right = static_cast<LONG>(left + width);
+	scissor.bottom = static_cast<LONG>(top + height);
+	commandList_->RSSetViewports(1, &viewport);
+	commandList_->RSSetScissorRects(1, &scissor);
+}
+
+void DirectXCommon::ResetViewportAndScissor()
+{
+	commandList_->RSSetViewports(1, &viewport_);
+	commandList_->RSSetScissorRects(1, &scissorRect_);
+}
+
 
 void DirectXCommon::PostDraw()
 {

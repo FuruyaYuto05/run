@@ -1,5 +1,6 @@
 #include "CourseManager.h"
 #include "CourseSegment.h"
+#include "DebugLayout.h"
 #include <algorithm>
 
 #ifdef USE_IMGUI
@@ -102,7 +103,7 @@ void CourseManager::Draw() {
 
 void CourseManager::DrawImGui() {
 #ifdef USE_IMGUI
-	ImGui::Begin("Course Settings");
+	DebugLayout::BeginPanel("Course / Performance", DebugLayout::Panel::Left);
 	ImGui::DragFloat("Initial Move Speed", &initialMoveSpeed_, 0.01f, 0.0f, kMaxMoveSpeed);
 	if (initialMoveSpeed_ < 0.0f) {
 		initialMoveSpeed_ = 0.0f;

@@ -6,6 +6,7 @@
 #include <list>
 #include <string>
 #include <unordered_map>
+#include <random>
 
 #include "Math.h"
 
@@ -15,6 +16,18 @@ class SrvManager;
 class ParticleManager
 {
 public:
+    // 画像ごとに異なる見た目へ調整するための設定。
+    struct ParticleSettings {
+        Math::Vector3 minScale{ 0.3f, 0.3f, 0.3f };
+        Math::Vector3 maxScale{ 0.3f, 0.3f, 0.3f };
+        Math::Vector3 minVelocity{ 0.0f, 0.03f, 0.0f };
+        Math::Vector3 maxVelocity{ 0.0f, 0.03f, 0.0f };
+        Math::Vector4 startColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+        Math::Vector4 endColor{ 1.0f, 1.0f, 1.0f, 0.0f };
+        float minLifeTime = 1.0f;
+        float maxLifeTime = 1.0f;
+    };
+
     // ==============================
     // シングルトン取得
     // ==============================
@@ -29,7 +42,10 @@ public:
     // ==============================
     // パーティクルグループ作成
     // ==============================
-    void CreateParticleGroup(const std::string& name, const std::string& textureFilePath);
+    void CreateParticleGroup(
+        const std::string& name,
+        const std::string& textureFilePath,
+        const ParticleSettings& settings = {});
 
     // ==============================
     // 更新
@@ -54,6 +70,12 @@ public:
         const Math::Vector3& position,
         uint32_t count
     );
+
+    // シーンを切り替えるとき、前のステージに残った粒を消す。
+    void Clear();
+
+    // 既存の調整パネル内へ、パーティクル用の設定項目だけを表示する。
+    void DrawImGuiContent();
 
 private:
     ParticleManager() = default;
@@ -81,8 +103,12 @@ private:
     struct Particle
     {
         Math::Transform transform;
+        Math::Vector3 startScale;
+        Math::Vector3 endScale;
         Math::Vector3 velocity;
         Math::Vector4 color;
+        Math::Vector4 startColor;
+        Math::Vector4 endColor;
         float lifeTime;
         float currentTime;
     };
@@ -134,6 +160,8 @@ private:
         // ==============================
         uint32_t numInstance = 0;
 
+        ParticleSettings settings{};
+
 
     };
 
@@ -143,6 +171,7 @@ private:
     // value: パーティクルグループ
     // ==============================
     std::unordered_map<std::string, ParticleGroup> particleGroups_;
+    std::mt19937 randomEngine_{ std::random_device{}() };
 
     // ==============================
     // 1グループあたりの最大パーティクル数

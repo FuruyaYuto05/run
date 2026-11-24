@@ -33,6 +33,8 @@ private:
 	ObstacleType type_ = ObstacleType::StoneLantern;
 	bool usesFallingLogEntrance_ = false;
 	bool logFallStarted_ = false;
+	// 倒れ切ったときの着地土煙は、丸太1本につき一度だけ出す。
+	bool logLandingDustEmitted_ = false;
 	float logFallProgress_ = 0.0f;
 	float logStandingSideX_ = 0.0f;
 	float logStandingRotationZ_ = 0.0f;

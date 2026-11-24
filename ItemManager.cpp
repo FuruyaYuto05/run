@@ -65,7 +65,7 @@ void ItemManager::Update(float cameraZ, float moveSpeed, float deltaTime) {
 			RespawnItem(*item, furthestZ);
 			furthestZ = item->GetPosition().z;
 		}
-		item->Update(deltaTime);
+		item->Update(deltaTime, moveSpeed);
 	}
 }
 
@@ -99,7 +99,7 @@ ItemType ItemManager::CheckCollection(const Math::Vector3& playerPosition) {
 void ItemManager::RespawnItem(Item& item, float z) {
 	item.SetPosition(NextSpawnPosition(item.GetType(), z));
 	// 取得・再配置したフレームから新しい位置を描画へ反映する。
-	item.Update(0.0f);
+	item.Update(0.0f, 0.0f);
 }
 
 int ItemManager::RandomLaneIndex() {

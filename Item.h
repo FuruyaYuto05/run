@@ -19,7 +19,7 @@ public:
 
 	void Initialize(Object3dCommon* object3dCommon, ItemType type, const Math::Vector3& position);
 	void Finalize();
-	void Update(float deltaTime);
+	void Update(float deltaTime, float scrollSpeed = 0.0f);
 	void Draw();
 
 	ItemType GetType() const { return type_; }

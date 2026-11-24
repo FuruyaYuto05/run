@@ -68,7 +68,8 @@ public:
     void Emit(
         const std::string& name,
         const Math::Vector3& position,
-        uint32_t count
+        uint32_t count,
+        const Math::Vector3& inheritedVelocity = Math::Vector3{}
     );
 
     // シーンを切り替えるとき、前のステージに残った粒を消す。

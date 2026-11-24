@@ -320,7 +320,8 @@ void ParticleManager::Draw()
 void ParticleManager::Emit(
     const std::string& name,
     const Math::Vector3& position,
-    uint32_t count
+    uint32_t count,
+    const Math::Vector3& inheritedVelocity
 )
 {
     // ==============================
@@ -371,6 +372,11 @@ void ParticleManager::Emit(
         // ==============================
         particle.velocity = RandomVector3(
             randomEngine_, settings.minVelocity, settings.maxVelocity);
+        // 動く発生源（魂など）から出す粒は、その移動量を受け継ぐ。
+        // これにより発生地点だけに取り残されず、発生源に付いて見える。
+        particle.velocity.x += inheritedVelocity.x;
+        particle.velocity.y += inheritedVelocity.y;
+        particle.velocity.z += inheritedVelocity.z;
 
         // ==============================
         // 色

@@ -37,7 +37,7 @@ void Item::Finalize() {
 	object3d_.reset();
 }
 
-void Item::Update(float deltaTime) {
+void Item::Update(float deltaTime, float scrollSpeed) {
 	animationTime_ += deltaTime;
 	Math::Vector3 position = basePosition_;
 	position.y += std::sin(animationTime_ * 3.0f) * 0.12f;
@@ -46,12 +46,16 @@ void Item::Update(float deltaTime) {
 	object3d_->SetRotate({ 0.0, 3.0f, 0.0f });
 	object3d_->Update();
 
-	// 魂の周囲から、小さな青い火の粉をゆっくり上へ漂わせる。
+	// 魂の周囲から青い火を短い間隔で出し、魂にまとわり付く見た目にする。
 	if (type_ == ItemType::MiniSoul) {
 		soulParticleTime_ += deltaTime;
-		if (soulParticleTime_ >= 0.45f) {
-			ParticleManager::GetInstance()->Emit("soulFire", position, 1);
-			soulParticleTime_ -= 0.45f;
+		if (soulParticleTime_ >= 0.10f) {
+			Math::Vector3 firePosition = position;
+			firePosition.y += 0.05f;
+			// コースの移動量を秒単位へ変換し、火の粉にも引き継がせる。
+			ParticleManager::GetInstance()->Emit(
+				"soulFire", firePosition, 1, { 0.0f, 0.0f, -scrollSpeed * 60.0f });
+			soulParticleTime_ -= 0.10f;
 		}
 	}
 }

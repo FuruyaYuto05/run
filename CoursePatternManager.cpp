@@ -59,7 +59,7 @@ void CoursePatternManager::Update(float cameraZ, float moveSpeed, float deltaTim
 		Math::Vector3 position = item->GetPosition();
 		position.z -= moveSpeed;
 		item->SetPosition(position);
-		item->Update(deltaTime);
+		item->Update(deltaTime, moveSpeed);
 	}
 
 	nextPatternZ_ -= moveSpeed;

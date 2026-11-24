@@ -67,14 +67,15 @@ void Framework::InitializeEngine() {
 	ParticleManager::GetInstance()->CreateParticleGroup("fog", "resources/particle/fog.png", fogSettings);
 
 	ParticleManager::ParticleSettings soulFireSettings{};
-	soulFireSettings.minScale = { 0.08f, 0.08f, 0.08f };
-	soulFireSettings.maxScale = { 0.15f, 0.15f, 0.15f };
-	soulFireSettings.minVelocity = { -0.05f, 0.22f, -0.05f };
-	soulFireSettings.maxVelocity = { 0.05f, 0.46f, 0.05f };
+	// 魂の炎は、魂にまとわり付くよう大きめ・短命にする。
+	soulFireSettings.minScale = { 0.16f, 0.16f, 0.16f };
+	soulFireSettings.maxScale = { 0.27f, 0.27f, 0.27f };
+	soulFireSettings.minVelocity = { -0.08f, 0.14f, -0.08f };
+	soulFireSettings.maxVelocity = { 0.08f, 0.32f, 0.08f };
 	soulFireSettings.startColor = { 0.75f, 0.92f, 1.0f, 0.82f };
 	soulFireSettings.endColor = { 0.35f, 0.65f, 1.0f, 0.0f };
-	soulFireSettings.minLifeTime = 0.45f;
-	soulFireSettings.maxLifeTime = 0.85f;
+	soulFireSettings.minLifeTime = 0.20f;
+	soulFireSettings.maxLifeTime = 0.32f;
 	ParticleManager::GetInstance()->CreateParticleGroup("soulFire", "resources/particle/soulFire.png", soulFireSettings);
 	spriteCommon_ = SpriteCommon::GetInstance(); spriteCommon_->Initialize(dxCommon_.get()); object3dCommon_ = Object3dCommon::GetInstance(); object3dCommon_->Initialize(dxCommon_.get());
 }

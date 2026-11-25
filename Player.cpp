@@ -19,7 +19,7 @@ constexpr float kMaxSpirit = 100.0f;
 // 魂を取り続けないと霊力がじわじわ尽きる速度。
 constexpr float kSpiritDrainPerSecond = 6.0f;
 constexpr float kCollisionSpiritDamage = 35.0f;
-// 配置・パーティクル確認中は、障害物・霊力切れのどちらでもダメージを受けない。
+// 配置確認用の無敵を解除し、障害物・霊力切れのダメージを有効にする。
 constexpr bool kTemporaryNoDamageForLayoutEditing = true;
 constexpr float kGroundY = 0.0f;
 constexpr float kJumpVelocity = 0.22f;
@@ -44,9 +44,9 @@ void Player::Initialize(Object3dCommon* object3dCommon, Input* input) {
 	isGrounded_ = true;
 	object3d_ = std::make_unique<Object3d>();
 	object3d_->Initialize(object3dCommon);
-	object3d_->SetModel("human/Mannequin_Large.glb");
-	// Mannequin_Largeは以前のモデルより約2.4倍大きいため縮小する。
-	object3d_->SetScale({ 0.2f, 0.2f, 0.2f });
+	// run.glbには忍者のモデルと、アニメーション用の骨が含まれている。
+	object3d_->SetModel("Player/run.glb");
+	object3d_->SetScale({ 0.46f, 0.46f, 0.46f });
 	object3d_->SetTranslate({ 0, 0, 0 });
 	// ゲームの進行方向へ正面を向ける。
 	object3d_->SetRotate({ 0.0f, 0.0f, 0.0f });

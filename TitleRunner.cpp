@@ -14,7 +14,9 @@
 namespace {
 constexpr float kDeltaTime = 1.0f / 60.0f;
 constexpr float kHalfPi = 1.5707963f;
-constexpr char kRunnerModelPath[] = "human/Mannequin_Large.glb";
+constexpr char kRunnerModelPath[] = "Player/run.glb";
+// 元の自機と画面上でおおむね同じ高さになるようにする。
+constexpr float kRunnerScale = 2.05f;
 }
 
 TitleRunner::TitleRunner() = default;
@@ -23,7 +25,7 @@ TitleRunner::~TitleRunner() = default;
 void TitleRunner::Initialize(Object3dCommon* object3dCommon, Camera* camera) {
 	ModelManager::GetInstance()->LoadModel(kRunnerModelPath);
 	model_ = ModelManager::GetInstance()->FindModel(kRunnerModelPath);
-	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
+	animation_ = LoadAnimationFile("resources/Player", "run.glb", "Armature|mixamo.com|Layer0");
 	animationTime_ = 0.0f;
 
 	// Object3dの初期化
@@ -31,7 +33,7 @@ void TitleRunner::Initialize(Object3dCommon* object3dCommon, Camera* camera) {
 	object3d_->Initialize(object3dCommon);
 	object3d_->SetCamera(camera);
 	object3d_->SetModel(model_);
-	object3d_->SetScale({ 0.9f, 0.9f, 0.9f });
+	object3d_->SetScale({ kRunnerScale, kRunnerScale, kRunnerScale });
 	object3d_->SetRotate({ 0.0f, kHalfPi, 0.0f });
 	object3d_->SetTranslate({ startX_, -3.0f, 2.0f });
 	object3d_->Update();
@@ -131,7 +133,7 @@ void TitleRunner::DrawImGui() {
 		endX_ = 8.5f;
 		moveSpeed_ = 0.045f;
 		object3d_->SetTranslate({ startX_, -3.0f, 2.0f });
-		object3d_->SetScale({ 0.9f, 0.9f, 0.9f });
+		object3d_->SetScale({ kRunnerScale, kRunnerScale, kRunnerScale });
 		object3d_->SetRotate({ 0.0f, kHalfPi, 0.0f });
 		ResetRun();
 	}

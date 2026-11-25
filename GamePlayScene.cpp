@@ -157,7 +157,7 @@ void GamePlayScene::Initialize() {
 		hpSprites_.push_back(std::move(sprite));
 	}
 	// プレイヤーとコース、障害物に必要なモデルを読み込む。
-	ModelManager::GetInstance()->LoadModel("human/Mannequin_Large.glb");
+	ModelManager::GetInstance()->LoadModel("Player/run.glb");
 	ModelManager::GetInstance()->LoadModel("Ghost.gltf");
 	ModelManager::GetInstance()->LoadModel("road.obj");
 	ModelManager::GetInstance()->LoadModel("building/k_ryu_shizumi_tourou.glb");
@@ -168,7 +168,7 @@ void GamePlayScene::Initialize() {
 	ModelManager::GetInstance()->LoadModel("building/k_machiya_a.glb");
 	ModelManager::GetInstance()->LoadModel("building/k_minato_banya.glb");
 	ModelManager::GetInstance()->LoadModel("building/k_v_ne_torii.glb");
-	animatedModel_ = ModelManager::GetInstance()->FindModel("human/Mannequin_Large.glb");
+	animatedModel_ = ModelManager::GetInstance()->FindModel("Player/run.glb");
 	ghostModel_ = ModelManager::GetInstance()->FindModel("Ghost.gltf");
 	// ゲーム内の各管理オブジェクトを生成する。
 	player_ = std::make_unique<Player>();
@@ -188,8 +188,9 @@ void GamePlayScene::Initialize() {
 	coursePatternManager_->Initialize(object3dCommon_);
 	forestManager_ = std::make_unique<ForestManager>();
 	forestManager_->Initialize(object3dCommon_);
-	animation_ = LoadAnimationFile("resources/human", "Rig_Large_MovementBasic.glb");
-	deathAnimation_ = LoadAnimationFile("resources/human", "Standing Death Forward 01.fbx");
+	animation_ = LoadAnimationFile("resources/Player", "run.glb", "Armature|mixamo.com|Layer0");
+	jumpAnimation_ = LoadAnimationFile("resources/Player", "jump.glb", "Armature|mixamo.com|Layer0.001");
+	deathAnimation_ = LoadAnimationFile("resources/Player", "death.glb", "Armature|mixamo.com|Layer0.002");
 	ghostAnimation_ = LoadAnimationFile("resources", "Ghost.gltf", "Fast_Flying");
 	// 演出中に描画できるよう、各3Dオブジェクトの行列だけ先に作る。
 	player_->Update();
@@ -284,8 +285,20 @@ void GamePlayScene::Update() {
 		ParticleManager::GetInstance()->Update(camera_->GetViewProjectionMatrix());
 		return;
 	}
-	// 走行アニメーションを繰り返し再生する。
-	if (animatedModel_ && animation_.duration > 0) { animationTime_ = std::fmod(animationTime_ + kDeltaTime, animation_.duration); animatedModel_->UpdateSkeleton(animation_, animationTime_); }
+	// 空中ではジャンプモーションを一度再生し、着地したら走行に戻す。
+	if (animatedModel_) {
+		const bool jumping = !player_->IsGrounded();
+		if (jumping && jumpAnimation_.duration > 0.0f) {
+			if (!wasJumping_) { jumpAnimationTime_ = 0.0f; }
+			// ジャンプの滞空時間（約0.62秒）にモーションを合わせる。
+			jumpAnimationTime_ = (std::min)(jumpAnimation_.duration, jumpAnimationTime_ + kDeltaTime * jumpAnimation_.duration / 0.62f);
+			animatedModel_->UpdateSkeleton(jumpAnimation_, jumpAnimationTime_);
+		} else if (animation_.duration > 0.0f) {
+			animationTime_ = std::fmod(animationTime_ + kDeltaTime, animation_.duration);
+			animatedModel_->UpdateSkeleton(animation_, animationTime_);
+		}
+		wasJumping_ = jumping;
+	}
 	// 祟りの飛行モーションを繰り返し再生する。
 	if (ghostModel_ && ghostAnimation_.duration > 0.0f) {
 		ghostAnimationTime_ = std::fmod(ghostAnimationTime_ + kDeltaTime, ghostAnimation_.duration);

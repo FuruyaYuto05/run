@@ -84,9 +84,12 @@ private:
 	std::unique_ptr<Sprite> gameOverFadeSprite_;
 	std::vector<DeathHandStamp> deathHandStamps_;
 	Animation animation_{};
+	Animation jumpAnimation_{};
 	Animation deathAnimation_{};
 	Animation ghostAnimation_{};
 	float animationTime_ = 0.0f;
+	float jumpAnimationTime_ = 0.0f;
+	bool wasJumping_ = false;
 	float deathAnimationTime_ = 0.0f;
 	float ghostAnimationTime_ = 0.0f;
 	float openingCameraTime_ = 0.0f;

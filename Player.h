@@ -27,6 +27,7 @@ public:
 	bool IsInvincible() const { return invincibleTimer_ > 0; }
 	int GetHp() const { return hp_; }
 	bool IsDead() const { return hp_ <= 0; }
+	bool IsGrounded() const { return isGrounded_; }
 	float GetSpiritRatio() const;
 	const Math::Vector3& GetPosition() const;
 
